@@ -1,0 +1,11 @@
+ARCHFLAGS :=
+CFLAGS := $(ARCHFLAGS) -O3 -I../inst/include -I/usr/local/boost -Wall -fPIC 
+CXXFLAGS := $(CFLAGS)
+
+LDFLAGS := -lvamp-sdk $(ARCHFLAGS) 
+PLUGIN_LDFLAGS := -dynamiclib -lvamp-sdk
+TEST_LDFLAGS := -lvamp-sdk -lboost_unit_test_framework
+PLUGIN_EXT := .dylib
+
+include Makefile.inc
+
