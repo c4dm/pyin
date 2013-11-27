@@ -324,22 +324,6 @@ PYIN::getOutputDescriptors() const
     outputs.push_back(d);
     m_oNotes = outputNumber++;
 
-    d.identifier = "notepitchtrack";
-    d.name = "Note pitch track.";
-    d.description = "Estimated fundamental frequencies during notes.";
-    d.unit = "Hz";
-    d.hasFixedBinCount = true;
-    d.binCount = 1;
-    d.hasKnownExtents = true;
-    d.minValue = m_fmin;
-    d.maxValue = 75;
-    d.isQuantized = false;
-    d.sampleType = OutputDescriptor::VariableSampleRate;
-    // d.sampleRate = (m_inputSampleRate / m_stepSize);
-    d.hasDuration = false;
-    outputs.push_back(d);
-    m_oNotePitchTrack = outputNumber++;
-
     return outputs;
 }
 
@@ -495,53 +479,34 @@ PYIN::getRemainingFeatures()
     int onsetFrame = 0;
     int framesInNote = 0;
     double pitchSum = 0;
-    
+
+    // make notes
+    bool isOpen = false;
     for (size_t iFrame = 0; iFrame < mnOut.size(); ++iFrame)
     {
-        if (std::pow(2,(mnOut[onsetFrame].pitch - 69) / 12) * 440 >= m_fmin && mnOut[iFrame].noteState != 2 && oldState == 2)
+        if (std::pow(2,(mnOut[onsetFrame].pitch - 69) / 12) * 440 >= m_fmin
+           && mnOut[iFrame].noteState != 2 
+           && oldState == 2
+           || iFrame == mnOut.size()-1 && isOpen)
         {
-            // greedy pitch track
             vector<double> notePitchTrack;
             for (size_t i = onsetFrame; i <= iFrame; ++i) 
             {
                 fNoteFreqTrack.timestamp = m_timestamp[i];
-                
-                bool hasPitch = 0;
-                double bestProb = 0;
-                double bestPitch = 0;
-                
-                for (int iCandidate = (int(m_pitchProb[i].size())) - 1; iCandidate != -1; --iCandidate)
-                {
-                    // std::cerr << "writing :( " << std::endl;
-                    double tempPitch = m_pitchProb[i][iCandidate].first;
-                    if (std::abs(tempPitch-mnOut[onsetFrame].pitch) < 5 && m_pitchProb[i][iCandidate].second > bestProb)
-                    {
-                        bestProb = m_pitchProb[i][iCandidate].second;
-                        bestPitch = m_pitchProb[i][iCandidate].first;
-                        hasPitch = 1;
-                    }
-                }
-                if (hasPitch) {
-                    double tempFreq = std::pow(2,(bestPitch - 69) / 12) * 440;
-                    notePitchTrack.push_back(bestPitch);
-                    fNoteFreqTrack.values.clear();
-                    fNoteFreqTrack.values.push_back(tempFreq); // convert back to Hz (Vamp hosts prefer that)
-                    fs[m_oNotePitchTrack].push_back(fNoteFreqTrack);
+                if (smoothedPitch[i].size() > 0) {
+                    notePitchTrack.push_back(smoothedPitch[i][0].first);
                 }
             }
-            
             // closing old note
-            f.duration = m_timestamp[iFrame]-m_timestamp[onsetFrame];
-            double tempPitch = mnOut[onsetFrame].pitch;
             size_t notePitchTrackSize = notePitchTrack.size();
-            if (notePitchTrackSize > 2) {
+            if (notePitchTrackSize > 6) {
+                f.duration = m_timestamp[iFrame]-m_timestamp[onsetFrame];
                 std::sort(notePitchTrack.begin(), notePitchTrack.end());
-                tempPitch = notePitchTrack[notePitchTrackSize/2]; // median
+                float tempPitch = notePitchTrack[notePitchTrackSize/2]; // median
+                f.values[0] = std::pow(2,(tempPitch - 69) / 12) * 440; // convert back to Hz (Vamp hosts prefer that)
+                fs[m_oNotes].push_back(f);
             }
-            f.values[0] = std::pow(2,(tempPitch - 69) / 12) * 440; // convert back to Hz (Vamp hosts prefer that)
-            fs[m_oNotes].push_back(f);
-            
-       
+            isOpen = false;
         }
     
         if (mnOut[iFrame].noteState == 1 && oldState != 1)
@@ -551,6 +516,7 @@ PYIN::getRemainingFeatures()
             f.timestamp = m_timestamp[iFrame];
             pitchSum = 0;
             framesInNote = 0;
+            isOpen = true;
         }
         
         oldState = mnOut[iFrame].noteState;
