@@ -11,7 +11,7 @@ CXXFLAGS := -I. $(CXXFLAGS)
 # PLUGIN_LDFLAGS := $(LDFLAGS) $(PLUGIN_LDFLAGS)
 # TEST_LDFLAGS := $(TEST_LDFLAGS) $(LDFLAGS) -lboost_unit_test_framework
 
-PLUGIN := yintony$(PLUGIN_EXT)
+PLUGIN := pyin$(PLUGIN_EXT)
 
 SOURCES := PYIN.cpp \
            VampYin.cpp \

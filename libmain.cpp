@@ -28,7 +28,7 @@
 #include "PYIN.h"
 #include "VampYin.h"
 
-static Vamp::PluginAdapter<PYIN> yintonyPluginAdapter;
+static Vamp::PluginAdapter<PYIN> pyinPluginAdapter;
 static Vamp::PluginAdapter<VampYin> vampyinPluginAdapter;
 
 const VampPluginDescriptor *
@@ -37,7 +37,7 @@ vampGetPluginDescriptor(unsigned int version, unsigned int index)
     if (version < 1) return 0;
 
     switch (index) {
-    case  0: return yintonyPluginAdapter.getDescriptor();
+    case  0: return pyinPluginAdapter.getDescriptor();
     case  1: return vampyinPluginAdapter.getDescriptor();
     default: return 0;
     }

@@ -68,13 +68,13 @@ PYIN::~PYIN()
 string
 PYIN::getIdentifier() const
 {
-    return "yintony";
+    return "pyin";
 }
 
 string
 PYIN::getName() const
 {
-    return "Yintony";
+    return "pYin";
 }
 
 string
@@ -462,85 +462,99 @@ PYIN::getRemainingFeatures()
         fs[m_oSmoothedPitchTrack].push_back(f);
     }
     
-    // // MONO-NOTE STUFF
-    // MonoNote mn;
-    // 
+    // MONO-NOTE STUFF
+    MonoNote mn;
+    std::vector<std::vector<std::pair<double, double> > > smoothedPitch;
+    for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame) {
+        std::vector<std::pair<double, double> > temp;
+        if (mpOut[iFrame] > 0)
+        {
+            double tempPitch = 12 * std::log(mpOut[iFrame]/440)/std::log(2.) + 69;
+            temp.push_back(std::pair<double,double>(tempPitch, .9));
+        }
+        smoothedPitch.push_back(temp);
+    }
     // vector<MonoNote::FrameOutput> mnOut = mn.process(m_pitchProb);
-    // 
-    // f.hasTimestamp = true;
-    // f.hasDuration = true;
-    // f.values.clear();
-    // f.values.push_back(0);
-    // 
-    // Feature fNoteFreqTrack;
-    // fNoteFreqTrack.hasTimestamp = true;
-    // fNoteFreqTrack.hasDuration = false;
-    // 
-    // 
-    // int oldState = -1;
-    // int onsetFrame = 0;
-    // int framesInNote = 0;
-    // double pitchSum = 0;
-    // 
+    vector<MonoNote::FrameOutput> mnOut = mn.process(smoothedPitch);
+    
     // for (size_t iFrame = 0; iFrame < mnOut.size(); ++iFrame)
     // {
-    //     if (std::pow(2,(mnOut[onsetFrame].pitch - 69) / 12) * 440 >= m_fmin && mnOut[iFrame].noteState != 2 && oldState == 2)
-    //     {
-    //         // greedy pitch track
-    //         vector<double> notePitchTrack;
-    //         for (size_t i = onsetFrame; i <= iFrame; ++i) 
-    //         {
-    //             fNoteFreqTrack.timestamp = m_timestamp[i];
-    //             
-    //             bool hasPitch = 0;
-    //             double bestProb = 0;
-    //             double bestPitch = 0;
-    //             
-    //             for (int iCandidate = (int(m_pitchProb[i].size())) - 1; iCandidate != -1; --iCandidate)
-    //             {
-    //                 // std::cerr << "writing :( " << std::endl;
-    //                 double tempPitch = m_pitchProb[i][iCandidate].first;
-    //                 if (std::abs(tempPitch-mnOut[onsetFrame].pitch) < 5 && m_pitchProb[i][iCandidate].second > bestProb)
-    //                 {
-    //                     bestProb = m_pitchProb[i][iCandidate].second;
-    //                     bestPitch = m_pitchProb[i][iCandidate].first;
-    //                     hasPitch = 1;
-    //                 }
-    //             }
-    //             if (hasPitch) {
-    //                 double tempFreq = std::pow(2,(bestPitch - 69) / 12) * 440;
-    //                 notePitchTrack.push_back(bestPitch);
-    //                 fNoteFreqTrack.values.clear();
-    //                 fNoteFreqTrack.values.push_back(tempFreq); // convert back to Hz (Vamp hosts prefer that)
-    //                 fs[m_oNotePitchTrack].push_back(fNoteFreqTrack);
-    //             }
-    //         }
-    //         
-    //         // closing old note
-    //         f.duration = m_timestamp[iFrame]-m_timestamp[onsetFrame];
-    //         double tempPitch = mnOut[onsetFrame].pitch;
-    //         size_t notePitchTrackSize = notePitchTrack.size();
-    //         if (notePitchTrackSize > 2) {
-    //             std::sort(notePitchTrack.begin(), notePitchTrack.end());
-    //             tempPitch = notePitchTrack[notePitchTrackSize/2]; // median
-    //         }
-    //         f.values[0] = std::pow(2,(tempPitch - 69) / 12) * 440; // convert back to Hz (Vamp hosts prefer that)
-    //         fs[m_oNotes].push_back(f);
-    //         
-    //    
-    //     }
-    // 
-    //     if (mnOut[iFrame].noteState == 1 && oldState != 1)
-    //     {
-    //         // open note
-    //         onsetFrame = iFrame;
-    //         f.timestamp = m_timestamp[iFrame];
-    //         pitchSum = 0;
-    //         framesInNote = 0;
-    //     }
-    //     
-    //     oldState = mnOut[iFrame].noteState;
+    //     std::cerr << mnOut[iFrame].pitch << std::endl;
     // }
+
+    f.hasTimestamp = true;
+    f.hasDuration = true;
+    f.values.clear();
+    f.values.push_back(0);
+    
+    Feature fNoteFreqTrack;
+    fNoteFreqTrack.hasTimestamp = true;
+    fNoteFreqTrack.hasDuration = false;
+    
+    int oldState = -1;
+    int onsetFrame = 0;
+    int framesInNote = 0;
+    double pitchSum = 0;
+    
+    for (size_t iFrame = 0; iFrame < mnOut.size(); ++iFrame)
+    {
+        if (std::pow(2,(mnOut[onsetFrame].pitch - 69) / 12) * 440 >= m_fmin && mnOut[iFrame].noteState != 2 && oldState == 2)
+        {
+            // greedy pitch track
+            vector<double> notePitchTrack;
+            for (size_t i = onsetFrame; i <= iFrame; ++i) 
+            {
+                fNoteFreqTrack.timestamp = m_timestamp[i];
+                
+                bool hasPitch = 0;
+                double bestProb = 0;
+                double bestPitch = 0;
+                
+                for (int iCandidate = (int(m_pitchProb[i].size())) - 1; iCandidate != -1; --iCandidate)
+                {
+                    // std::cerr << "writing :( " << std::endl;
+                    double tempPitch = m_pitchProb[i][iCandidate].first;
+                    if (std::abs(tempPitch-mnOut[onsetFrame].pitch) < 5 && m_pitchProb[i][iCandidate].second > bestProb)
+                    {
+                        bestProb = m_pitchProb[i][iCandidate].second;
+                        bestPitch = m_pitchProb[i][iCandidate].first;
+                        hasPitch = 1;
+                    }
+                }
+                if (hasPitch) {
+                    double tempFreq = std::pow(2,(bestPitch - 69) / 12) * 440;
+                    notePitchTrack.push_back(bestPitch);
+                    fNoteFreqTrack.values.clear();
+                    fNoteFreqTrack.values.push_back(tempFreq); // convert back to Hz (Vamp hosts prefer that)
+                    fs[m_oNotePitchTrack].push_back(fNoteFreqTrack);
+                }
+            }
+            
+            // closing old note
+            f.duration = m_timestamp[iFrame]-m_timestamp[onsetFrame];
+            double tempPitch = mnOut[onsetFrame].pitch;
+            size_t notePitchTrackSize = notePitchTrack.size();
+            if (notePitchTrackSize > 2) {
+                std::sort(notePitchTrack.begin(), notePitchTrack.end());
+                tempPitch = notePitchTrack[notePitchTrackSize/2]; // median
+            }
+            f.values[0] = std::pow(2,(tempPitch - 69) / 12) * 440; // convert back to Hz (Vamp hosts prefer that)
+            fs[m_oNotes].push_back(f);
+            
+       
+        }
+    
+        if (mnOut[iFrame].noteState == 1 && oldState != 1)
+        {
+            // open note
+            onsetFrame = iFrame;
+            f.timestamp = m_timestamp[iFrame];
+            pitchSum = 0;
+            framesInNote = 0;
+        }
+        
+        oldState = mnOut[iFrame].noteState;
+    }
     
     
     return fs;
