@@ -1,5 +1,7 @@
 
 CFLAGS := -Wall -O3 -fPIC -I../vamp-plugin-sdk/
+#CFLAGS := -g -fPIC -I../vamp-plugin-sdk
+
 CXXFLAGS := $(CFLAGS)
 
 PLUGIN_LDFLAGS := -shared -Wl,-Bstatic -L../vamp-plugin-sdk -lvamp-sdk -Wl,-Bdynamic 
