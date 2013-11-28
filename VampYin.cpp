@@ -30,7 +30,7 @@ VampYin::VampYin(float inputSampleRate) :
     m_outNoRms(0),
     m_outNoSalience(0),
     m_yinParameter(0.15f),
-    m_outputUnvoiced(0.0f)
+    m_outputUnvoiced(2.0f)
 {
 }
 

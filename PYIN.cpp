@@ -55,7 +55,7 @@ PYIN::PYIN(float inputSampleRate) :
     m_oSmoothedPitchTrack(0),
     m_oNotes(0),
     m_threshDistr(2.0f),
-    m_outputUnvoiced(0),
+    m_outputUnvoiced(2.0f),
     m_pitchProb(0),
     m_timestamp(0)
 {
@@ -442,6 +442,10 @@ PYIN::getRemainingFeatures()
     f.hasTimestamp = true;
     f.hasDuration = false;
     
+    if (m_pitchProb.empty()) {
+        return fs;
+    }
+
     // MONO-PITCH STUFF
     MonoPitch mp;
     std::cerr << "before viterbi" << std::endl;
