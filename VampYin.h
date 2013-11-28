@@ -60,8 +60,9 @@ protected:
     mutable int m_outNoPeriodicity;
     mutable int m_outNoRms;
     mutable int m_outNoSalience;
-    mutable float m_yinParameter;
-    mutable float m_outputUnvoiced;
+
+    float m_yinParameter;
+    float m_outputUnvoiced;
 };
 
 #endif

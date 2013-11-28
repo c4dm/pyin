@@ -63,10 +63,11 @@ protected:
     mutable int m_oSmoothedPitchTrack;
     mutable int m_oNotes;
     mutable int m_oNotePitchTrack;
-    mutable float m_threshDistr;
-    mutable float m_outputUnvoiced;
-    mutable vector<vector<pair<double, double> > > m_pitchProb;
-    mutable vector<Vamp::RealTime> m_timestamp;
+
+    float m_threshDistr;
+    float m_outputUnvoiced;
+    vector<vector<pair<double, double> > > m_pitchProb;
+    vector<Vamp::RealTime> m_timestamp;
 };
 
 #endif
