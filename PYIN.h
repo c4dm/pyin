@@ -62,7 +62,6 @@ protected:
     mutable int m_oCandidateSalience;
     mutable int m_oSmoothedPitchTrack;
     mutable int m_oNotes;
-    mutable int m_oNotePitchTrack;
 
     float m_threshDistr;
     float m_outputUnvoiced;
