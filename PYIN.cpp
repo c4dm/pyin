@@ -475,33 +475,98 @@ PYIN::getRemainingFeatures()
     bool oldIsVoiced = 0;
     size_t nFrame = m_pitchProb.size();
     
+<<<<<<< local
     std::vector<float> notePitchTrack; // collects pitches for one note at a time
     for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
+=======
+    Feature fNoteFreqTrack;
+    fNoteFreqTrack.hasTimestamp = true;
+    fNoteFreqTrack.hasDuration = false;
+    
+    int oldState = -1;
+    int onsetFrame = 0;
+    int framesInNote = 0;
+    double pitchSum = 0;
+
+    // make notes
+    bool isOpen = false;
+    for (size_t iFrame = 0; iFrame < mnOut.size(); ++iFrame)
+>>>>>>> other
     {
+<<<<<<< local
         isVoiced = mnOut[iFrame].noteState < 3 && smoothedPitch[iFrame].size() > 0;
         if (isVoiced && iFrame != nFrame-1)
+=======
+        if (std::pow(2,(mnOut[onsetFrame].pitch - 69) / 12) * 440 >= m_fmin
+           && mnOut[iFrame].noteState != 2 
+           && oldState == 2
+           || iFrame == mnOut.size()-1 && isOpen)
+>>>>>>> other
         {
+<<<<<<< local
             if (oldIsVoiced == 0) // beginning of a note
+=======
+            vector<double> notePitchTrack;
+            for (size_t i = onsetFrame; i <= iFrame; ++i) 
+>>>>>>> other
             {
+<<<<<<< local
                 onsetFrame = iFrame;
                 notePitchTrack.clear();
+=======
+                fNoteFreqTrack.timestamp = m_timestamp[i];
+                if (smoothedPitch[i].size() > 0) {
+                    notePitchTrack.push_back(smoothedPitch[i][0].first);
+                }
+>>>>>>> other
             }
+<<<<<<< local
             float pitch = smoothedPitch[iFrame][0].first;
             notePitchTrack.push_back(pitch); // add to the note's pitch track
         } else { // not currently voiced
             if (oldIsVoiced == 1 && notePitchTrack.size() > 4) // end of the note
             {
+=======
+            // closing old note
+            size_t notePitchTrackSize = notePitchTrack.size();
+            if (notePitchTrackSize > 6) {
+                f.duration = m_timestamp[iFrame]-m_timestamp[onsetFrame];
+>>>>>>> other
                 std::sort(notePitchTrack.begin(), notePitchTrack.end());
+<<<<<<< local
                 float medianPitch = notePitchTrack[notePitchTrack.size()/2];
                 float medianFreq = std::pow(2,(medianPitch - 69) / 12) * 440;
                 f.values.clear();
                 f.values.push_back(medianFreq);
                 f.timestamp = m_timestamp[onsetFrame];
                 f.duration = m_timestamp[iFrame] - m_timestamp[onsetFrame];
+=======
+                float tempPitch = notePitchTrack[notePitchTrackSize/2]; // median
+                f.values[0] = std::pow(2,(tempPitch - 69) / 12) * 440; // convert back to Hz (Vamp hosts prefer that)
+>>>>>>> other
                 fs[m_oNotes].push_back(f);
             }
+<<<<<<< local
+=======
+            isOpen = false;
+>>>>>>> other
         }
+<<<<<<< local
         oldIsVoiced = isVoiced;
+=======
+    
+        if (mnOut[iFrame].noteState == 1 && oldState != 1)
+        {
+            // open note
+            onsetFrame = iFrame;
+            f.timestamp = m_timestamp[iFrame];
+            pitchSum = 0;
+            framesInNote = 0;
+            isOpen = true;
+        }
+        
+        oldState = mnOut[iFrame].noteState;
+>>>>>>> other
     }
     
     
