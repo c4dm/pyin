@@ -1,25 +1,14 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
+
 /*
-    This file is Copyright (c) 2012 Chris Cannam
-  
-    Permission is hereby granted, free of charge, to any person
-    obtaining a copy of this software and associated documentation
-    files (the "Software"), to deal in the Software without
-    restriction, including without limitation the rights to use, copy,
-    modify, merge, publish, distribute, sublicense, and/or sell copies
-    of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be
-    included in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR
-    ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
-    CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+    pYIN - A fundamental frequency estimator for monophonic audio
+    Centre for Digital Music, Queen Mary, University of London.
+    
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License as
+    published by the Free Software Foundation; either version 2 of the
+    License, or (at your option) any later version.  See the file
+    COPYING included with this distribution for more information.
 */
 
 #include "PYIN.h"
@@ -333,10 +322,11 @@ PYIN::initialise(size_t channels, size_t stepSize, size_t blockSize)
     if (channels < getMinChannelCount() ||
 	channels > getMaxChannelCount()) return false;
 
+/*
     std::cerr << "PYIN::initialise: channels = " << channels
           << ", stepSize = " << stepSize << ", blockSize = " << blockSize
           << std::endl;
-
+*/
     m_channels = channels;
     m_stepSize = stepSize;
     m_blockSize = blockSize;
@@ -354,10 +344,11 @@ PYIN::reset()
     
     m_pitchProb.clear();
     m_timestamp.clear();
-    
+/*    
     std::cerr << "PYIN::reset"
           << ", blockSize = " << m_blockSize
           << std::endl;
+*/
 }
 
 PYIN::FeatureSet
@@ -432,7 +423,7 @@ PYIN::getRemainingFeatures()
 
     // MONO-PITCH STUFF
     MonoPitch mp;
-    std::cerr << "before viterbi" << std::endl;
+//    std::cerr << "before viterbi" << std::endl;
     vector<float> mpOut = mp.process(m_pitchProb);
     // std::cerr << "after viterbi " << mpOut.size() << " "<< m_timestamp.size() << std::endl;
     for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame)
