@@ -1,10 +1,10 @@
-ARCHFLAGS :=
-CFLAGS := $(ARCHFLAGS) -O3 -I../inst/include -I/usr/local/boost -Wall -fPIC 
+ARCHFLAGS := -arch x86_64 -arch i386 -mmacosx-version-min=10.7
+CFLAGS := $(ARCHFLAGS) -O3 -I../vamp-plugin-sdk -I/usr/local/boost -Wall -fPIC 
 CXXFLAGS := $(CFLAGS)
 
-LDFLAGS := -lvamp-sdk $(ARCHFLAGS) 
-PLUGIN_LDFLAGS := -dynamiclib -lvamp-sdk
-TEST_LDFLAGS := -lvamp-sdk -lboost_unit_test_framework
+LDFLAGS := -L../vamp-plugin-sdk -lvamp-sdk $(ARCHFLAGS) 
+PLUGIN_LDFLAGS := -dynamiclib $(LDFLAGS) -exported_symbols_list vamp-plugin.list
+TEST_LDFLAGS := $(LDFLAGS) -lboost_unit_test_framework
 PLUGIN_EXT := .dylib
 
 include Makefile.inc
