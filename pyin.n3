@@ -17,7 +17,7 @@
     vamp:identifier "pyin"  ; 
     vamp:available_plugin plugbase:pyin ; 
     vamp:available_plugin plugbase:yin ; 
-    foaf:page <https://code.soundsoftware.ac.uk/projects/pyin> ;
+    foaf:page <http://code.soundsoftware.ac.uk/projects/pyin> ;
     .
 
 plugbase:pyin a   vamp:Plugin ;
