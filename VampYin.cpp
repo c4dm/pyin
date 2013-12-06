@@ -250,7 +250,7 @@ VampYin::getOutputDescriptors() const
     m_outNoPeriodicity = outputNumber++;
 
     d.identifier = "rms";
-    d.name = "root mean square";
+    d.name = "Root mean square";
     d.description = "Root mean square of the waveform.";
     d.unit = "";
     d.hasFixedBinCount = true;
