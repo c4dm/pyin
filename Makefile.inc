@@ -7,10 +7,6 @@ CC	?= gcc
 CFLAGS := $(CFLAGS) 
 CXXFLAGS := -I. $(CXXFLAGS)
 
-# LDFLAGS := $(LDFLAGS) -lvamp-sdk
-# PLUGIN_LDFLAGS := $(LDFLAGS) $(PLUGIN_LDFLAGS)
-# TEST_LDFLAGS := $(TEST_LDFLAGS) $(LDFLAGS) -lboost_unit_test_framework
-
 PLUGIN := pyin$(PLUGIN_EXT)
 
 SOURCES := PYIN.cpp \

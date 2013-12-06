@@ -1,0 +1,12 @@
+
+CXX	:= i486-mingw32-g++
+CC	:= i486-mingw32-gcc
+
+CFLAGS    := -Wall -O2
+CXXFLAGS  := $(CFLAGS) -I../include -I../boost_1_53_0
+PLUGIN_LDFLAGS	  := -shared -L../lib -lvamp-sdk -Wl,-Bsymbolic -static-libgcc -Wl,--version-script=vamp-plugin.map -fno-exceptions $(shell $(CXX) -print-file-name=libstdc++.a)
+
+PLUGIN_EXT   := .dll
+
+include Makefile.inc
+
