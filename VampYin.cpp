@@ -1,5 +1,16 @@
 /* -*- c-basic-offset: 4 indent-tabs-mode: nil -*-  vi:set ts=8 sts=4 sw=4: */
 
+/*
+    pYIN - A fundamental frequency estimator for monophonic audio
+    Centre for Digital Music, Queen Mary, University of London.
+    
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License as
+    published by the Free Software Foundation; either version 2 of the
+    License, or (at your option) any later version.  See the file
+    COPYING included with this distribution for more information.
+*/
+
 #include "VampYin.h"
 #include "MonoNote.h"
 
@@ -278,10 +289,11 @@ VampYin::initialise(size_t channels, size_t stepSize, size_t blockSize)
     if (channels < getMinChannelCount() ||
 	channels > getMaxChannelCount()) return false;
 
+/*
     std::cerr << "VampYin::initialise: channels = " << channels
           << ", stepSize = " << stepSize << ", blockSize = " << blockSize
           << std::endl;
-
+*/
     m_channels = channels;
     m_stepSize = stepSize;
     m_blockSize = blockSize;
@@ -296,10 +308,11 @@ VampYin::reset()
 {    
     m_yin.setThreshold(m_yinParameter);
     m_yin.setFrameSize(m_blockSize);
-        
+/*        
     std::cerr << "VampYin::reset: yin threshold set to " << (m_yinParameter)
           << ", blockSize = " << m_blockSize
           << std::endl;
+*/
 }
 
 VampYin::FeatureSet
