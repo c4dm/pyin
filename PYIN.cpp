@@ -309,7 +309,7 @@ PYIN::selectProgram(string name)
     {
         m_currentProgram = "donttellme";
         m_minLocalFreq = 0;
-        m_maxLocalFreq = 400;
+        m_maxLocalFreq = 500;
         m_leftBoundary = 1.9;
         m_rightBoundary = 2.9;
     }
