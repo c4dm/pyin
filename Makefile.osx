@@ -1,4 +1,4 @@
-ARCHFLAGS := -arch x86_64 -arch i386 -mmacosx-version-min=10.7
+ARCHFLAGS := -arch x86_64 -mmacosx-version-min=10.7
 CFLAGS := $(ARCHFLAGS) -O3 -I../vamp-plugin-sdk -I/usr/local/boost -Wall -fPIC 
 CXXFLAGS := $(CFLAGS)
 

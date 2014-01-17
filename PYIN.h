@@ -72,8 +72,13 @@ protected:
 
     float m_threshDistr;
     float m_outputUnvoiced;
+    float m_minLocalFreq;
+    float m_maxLocalFreq;
+    float m_leftBoundary;
+    float m_rightBoundary;
     vector<vector<pair<double, double> > > m_pitchProb;
     vector<Vamp::RealTime> m_timestamp;
+    std::string m_currentProgram;
 };
 
 #endif

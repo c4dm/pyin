@@ -45,8 +45,13 @@ PYIN::PYIN(float inputSampleRate) :
     m_oNotes(0),
     m_threshDistr(2.0f),
     m_outputUnvoiced(0.0f),
+    m_minLocalFreq(0.f),
+    m_maxLocalFreq(5000.f),
+    m_leftBoundary(0.f),
+    m_rightBoundary(5000.f), // hack
     m_pitchProb(0),
-    m_timestamp(0)
+    m_timestamp(0),
+    m_currentProgram("")
 {
 }
 
@@ -162,6 +167,58 @@ PYIN::getParameterDescriptors() const
     d.valueNames.push_back("Yes");
     d.valueNames.push_back("Yes, as negative frequencies");
     list.push_back(d);
+    
+    d.identifier = "minlocalfreq";
+    d.valueNames.clear();
+    d.name = "Minimum local frequency.";
+    d.description = "Minimum frequency in selection.";
+    d.unit = "";
+    d.minValue = 50.f;
+    d.maxValue = 5000.f;
+    d.defaultValue = 50.f;
+    d.isQuantized = false;
+    d.quantizeStep = 0;
+    d.valueNames.clear();
+    list.push_back(d);
+
+    d.identifier = "maxlocalfreq";
+    d.valueNames.clear();
+    d.name = "Maximum local frequency.";
+    d.description = "Maximum frequency in selection.";
+    d.unit = "";
+    d.minValue = 50.f;
+    d.maxValue = 5000.f;
+    d.defaultValue = 5000.f;
+    d.isQuantized = false;
+    d.quantizeStep = 0;
+    d.valueNames.clear();
+    list.push_back(d);
+
+    d.identifier = "leftboundary";
+    d.valueNames.clear();
+    d.name = "Left boundary.";
+    d.description = "Left boundary of time selection.";
+    d.unit = "";
+    d.minValue = 0.f;
+    d.maxValue = 1000.f;
+    d.defaultValue = 0.f;
+    d.isQuantized = false;
+    d.quantizeStep = 0;
+    d.valueNames.clear();
+    list.push_back(d);
+
+    d.identifier = "rightboundary";
+    d.valueNames.clear();
+    d.name = "Right boundary.";
+    d.description = "Right boundary of time selection.";
+    d.unit = "";
+    d.minValue = 0.f;
+    d.maxValue = 1000.f;
+    d.defaultValue = 0.f;
+    d.isQuantized = false;
+    d.quantizeStep = 0;
+    d.valueNames.clear();
+    list.push_back(d);
 
     return list;
 }
@@ -175,12 +232,25 @@ PYIN::getParameter(string identifier) const
     if (identifier == "outputunvoiced") {
             return m_outputUnvoiced;
     }
+    if (identifier == "minlocalfreq") {
+            return m_minLocalFreq;
+    }
+    if (identifier == "maxlocalfreq") {
+            return m_maxLocalFreq;
+    }
+    if (identifier == "leftboundary") {
+            return m_leftBoundary;
+    }
+    if (identifier == "rightboundary") {
+            return m_rightBoundary;
+    }
     return 0.f;
 }
 
 void
 PYIN::setParameter(string identifier, float value) 
 {
+    m_currentProgram = "custom";
     if (identifier == "threshdistr")
     {
         m_threshDistr = value;
@@ -189,25 +259,60 @@ PYIN::setParameter(string identifier, float value)
     {
         m_outputUnvoiced = value;
     }
-    
+    if (identifier == "minlocalfreq")
+    {
+        m_minLocalFreq = value;
+    }
+    if (identifier == "maxlocalfreq")
+    {
+        m_maxLocalFreq = value;
+    }
+    if (identifier == "leftboundary")
+    {
+        m_leftBoundary = value;
+    }
+    if (identifier == "rightboundary")
+    {
+        m_rightBoundary = value;
+    }
 }
 
 PYIN::ProgramList
 PYIN::getPrograms() const
 {
     ProgramList list;
+    list.push_back("default");
+    list.push_back("custom");
+    list.push_back("donttellme");
     return list;
 }
 
 string
 PYIN::getCurrentProgram() const
 {
-    return ""; // no programs
+    return m_currentProgram;
 }
 
 void
 PYIN::selectProgram(string name)
 {
+    if (name == "default") {
+        m_minLocalFreq = 0;
+        m_maxLocalFreq = 10000;
+        m_leftBoundary = 0;
+        m_rightBoundary = 5000;
+    }
+    if (name == "custom") {
+        // do nothing
+    }
+    if (name == "donttellme")
+    {
+        m_currentProgram = "donttellme";
+        m_minLocalFreq = 0;
+        m_maxLocalFreq = 400;
+        m_leftBoundary = 1.9;
+        m_rightBoundary = 2.9;
+    }
 }
 
 PYIN::OutputList
@@ -360,7 +465,16 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
     double *dInputBuffers = new double[m_blockSize];
     for (size_t i = 0; i < m_blockSize; ++i) dInputBuffers[i] = inputBuffers[0][i];
     
-    Yin::YinOutput yo = m_yin.processProbabilisticYin(dInputBuffers);
+    Yin::YinOutput yo;
+    float floatTime = timestamp.sec + timestamp.nsec * 1.0 / 1000000000;
+    std::cerr << timestamp << " " << floatTime << std::endl;
+    if (floatTime > m_leftBoundary && floatTime < m_rightBoundary) {
+        // constrained
+        yo = m_yin.processProbabilisticYin(dInputBuffers, m_minLocalFreq, m_maxLocalFreq);
+    } else {
+        yo = m_yin.processProbabilisticYin(dInputBuffers);
+    }
+    
     
     Feature f;
     f.hasTimestamp = true;

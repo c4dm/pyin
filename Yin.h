@@ -55,7 +55,8 @@ public:
     int setFrameSize(size_t frameSize);
     // int setRemoveUnvoiced(bool frameSize);
     YinOutput process(const double *in) const;
-    YinOutput processProbabilisticYin(const double *in) const;
+    YinOutput processProbabilisticYin(const double *in,
+                                      float minFreq = -1, float maxFreq = -1) const;
 
 private:
     mutable size_t m_frameSize;

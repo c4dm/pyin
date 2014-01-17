@@ -81,7 +81,7 @@ Yin::process(const double *in) const {
 }
 
 Yin::YinOutput
-Yin::processProbabilisticYin(const double *in) const {
+Yin::processProbabilisticYin(const double *in, float minFreq, float maxFreq) const {
     
     double* yinBuffer = new double[m_yinBufferSize];
 
@@ -89,7 +89,18 @@ Yin::processProbabilisticYin(const double *in) const {
     YinUtil::fastDifference(in, yinBuffer, m_yinBufferSize);    
     YinUtil::cumulativeDifference(yinBuffer, m_yinBufferSize);
 
-    vector<double> peakProbability = YinUtil::yinProb(yinBuffer, m_threshDistr, m_yinBufferSize);
+    vector<double> peakProbability;
+    if ((minFreq < 0 && maxFreq < 0) ||  maxFreq < minFreq)
+    {
+        peakProbability = YinUtil::yinProb(yinBuffer, m_threshDistr, m_yinBufferSize);
+    } else {
+        if (minFreq < 0) minFreq = 0;
+        if (maxFreq < 0) maxFreq = m_inputSampleRate / 2;
+        int minTau = m_inputSampleRate / maxFreq;
+        int maxTau = m_inputSampleRate / minFreq;
+        peakProbability = YinUtil::yinProb(yinBuffer, m_threshDistr, m_yinBufferSize, minTau, maxTau);
+    }
+    
     
     // calculate overall "probability" from peak probability
     double probSum = 0;

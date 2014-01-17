@@ -166,10 +166,24 @@ YinUtil::absoluteThreshold(const double *yinBuffer, const size_t yinBufferSize, 
 
 
 std::vector<double>
-YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t yinBufferSize) 
+YinUtil::yinProb(const double *yinBuffer, const size_t prior, 
+                 const size_t yinBufferSize,
+                 size_t minTau, size_t maxTau) 
 {
     double minWeight = 0.01;
-    size_t tau;
+    
+    // sortint out min and max tau -- could be done more elegantly
+    size_t tau = 2;
+    if (minTau >= tau && minTau < yinBufferSize)
+    {
+        tau = minTau;
+    } else {
+        tau = 2;
+    }
+    if (maxTau < minTau) maxTau = yinBufferSize;
+    maxTau = std::min(maxTau, yinBufferSize);
+    std::cerr << maxTau << std::endl;
+
     std::vector<float> thresholds;
     std::vector<float> distribution;
     std::vector<double> peakProb = std::vector<double>(yinBufferSize);
@@ -229,11 +243,10 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t yinBu
     //     }
     // }
     // if (minYin < 0.01) std::cerr << "min Yin buffer element: " << minYin << std::endl;
-    
-    
+
+
     int currThreshInd = nThreshold-1;
-    tau = 2;
-    
+
     // double factor = 1.0 / (0.25 * (nThresholdInt+1) * (nThresholdInt + 1)); // factor to scale down triangular weight
     size_t minInd = 0;
     float minVal = 42.f;
@@ -241,7 +254,7 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t yinBu
     {
         if (yinBuffer[tau] < thresholds[currThreshInd])
         {
-            while (tau + 1 < yinBufferSize && yinBuffer[tau+1] < yinBuffer[tau])
+            while (tau + 1 < maxTau && yinBuffer[tau+1] < yinBuffer[tau])
             {
                 tau++;
             }
@@ -258,7 +271,7 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t yinBu
         }
     }
     double nonPeakProb = 1;
-    for (size_t i = 0; i < yinBufferSize; ++i)
+    for (size_t i = minTau; i < maxTau; ++i)
     {
         nonPeakProb -= peakProb[i];
     }
