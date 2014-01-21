@@ -423,9 +423,7 @@ PYIN::getRemainingFeatures()
 
     // MONO-PITCH STUFF
     MonoPitch mp;
-//    std::cerr << "before viterbi" << std::endl;
     vector<float> mpOut = mp.process(m_pitchProb);
-    // std::cerr << "after viterbi " << mpOut.size() << " "<< m_timestamp.size() << std::endl;
     for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame)
     {
         if (mpOut[iFrame] < 0 && (m_outputUnvoiced==0)) continue;
