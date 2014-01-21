@@ -431,7 +431,7 @@ PYIN::getRemainingFeatures()
         f.values.clear();
         if (m_outputUnvoiced == 1)
         {
-            f.values.push_back(abs(mpOut[iFrame]));
+            f.values.push_back(fabs(mpOut[iFrame]));
         } else {
             f.values.push_back(mpOut[iFrame]);
         }
