@@ -23,7 +23,7 @@ using std::pair;
 
 MonoPitchHMM::MonoPitchHMM() :
 m_minFreq(55),
-m_nBPS(10),
+m_nBPS(5),
 m_nPitch(0),
 m_transitionWidth(0),
 m_selfTrans(0.99),
