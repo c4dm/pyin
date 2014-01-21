@@ -354,7 +354,6 @@ PYIN::reset()
 PYIN::FeatureSet
 PYIN::process(const float *const *inputBuffers, RealTime timestamp)
 {
-    std::cerr << "new pyin new pyin" << std::endl;
     timestamp = timestamp + Vamp::RealTime::frame2RealTime(m_blockSize/4, lrintf(m_inputSampleRate));
     FeatureSet fs;
     
@@ -416,7 +415,6 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
 PYIN::FeatureSet
 PYIN::getRemainingFeatures()
 {
-    std::cerr << m_timestamp[0] << std::endl;
     FeatureSet fs;
     Feature f;
     f.hasTimestamp = true;
