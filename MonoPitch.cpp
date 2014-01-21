@@ -40,12 +40,6 @@ MonoPitch::process(const vector<vector<pair<double, double> > > pitchProb)
     {
         obsProb.push_back(hmm.calculateObsProb(pitchProb[iFrame]));
     }
-    for (size_t i = 0; i < obsProb[0].size(); ++i) {
-        obsProb[0][i] = 0;
-    }
-    obsProb[0][obsProb[0].size()-1] = 1;
-    
-    // std::cerr << "after observation prob calculation" << std::endl;
     
     vector<double> *scale = new vector<double>(pitchProb.size());
     

@@ -354,6 +354,7 @@ PYIN::reset()
 PYIN::FeatureSet
 PYIN::process(const float *const *inputBuffers, RealTime timestamp)
 {
+    std::cerr << "new pyin new pyin" << std::endl;
     timestamp = timestamp + Vamp::RealTime::frame2RealTime(m_blockSize/4, lrintf(m_inputSampleRate));
     FeatureSet fs;
     
@@ -361,7 +362,21 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
     for (size_t i = 0; i < m_blockSize; ++i) dInputBuffers[i] = inputBuffers[0][i];
     
     Yin::YinOutput yo = m_yin.processProbabilisticYin(dInputBuffers);
-    
+    delete [] dInputBuffers;
+
+    // First, get the things out of the way that we don't want to output 
+    // immediately, but instead save for later.
+    vector<pair<double, double> > tempPitchProb;
+    for (size_t iCandidate = 0; iCandidate < yo.freqProb.size(); ++iCandidate)
+    {
+        double tempPitch = 12 * std::log(yo.freqProb[iCandidate].first/440)/std::log(2.) + 69;
+        tempPitchProb.push_back(pair<double, double>
+            (tempPitch, yo.freqProb[iCandidate].second));
+    }
+    m_pitchProb.push_back(tempPitchProb);
+    m_timestamp.push_back(timestamp);
+
+    // F0 CANDIDATES
     Feature f;
     f.hasTimestamp = true;
     f.timestamp = timestamp;
@@ -371,6 +386,7 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
     }
     fs[m_oF0Candidates].push_back(f);
     
+    // VOICEDPROB
     f.values.clear();
     float voicedProb = 0;
     for (size_t i = 0; i < yo.freqProb.size(); ++i)
@@ -384,6 +400,7 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
     f.values.push_back(voicedProb);
     fs[m_oVoicedProb].push_back(f);
 
+    // SALIENCE -- maybe this should eventually disappear
     f.values.clear();
     float salienceSum = 0;
     for (size_t iBin = 0; iBin < yo.salience.size(); ++iBin)
@@ -393,25 +410,13 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
     }
     fs[m_oCandidateSalience].push_back(f);
 
-    delete [] dInputBuffers;
-
-    vector<pair<double, double> > tempPitchProb;
-    for (size_t iCandidate = 0; iCandidate < yo.freqProb.size(); ++iCandidate)
-    {
-        double tempPitch = 12 * std::log(yo.freqProb[iCandidate].first/440)/std::log(2.) + 69;
-        tempPitchProb.push_back(pair<double, double>
-            (tempPitch, yo.freqProb[iCandidate].second));
-    }
-    m_pitchProb.push_back(tempPitchProb);
-        
-    m_timestamp.push_back(timestamp);
-
     return fs;
 }
 
 PYIN::FeatureSet
 PYIN::getRemainingFeatures()
 {
+    std::cerr << m_timestamp[0] << std::endl;
     FeatureSet fs;
     Feature f;
     f.hasTimestamp = true;
