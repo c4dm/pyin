@@ -395,7 +395,6 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
     }
     fs[m_oF0Probs].push_back(f);
     
-    f.values.clear();
     f.values.push_back(voicedProb);
     fs[m_oVoicedProb].push_back(f);
 

@@ -11,6 +11,7 @@ PLUGIN := pyin$(PLUGIN_EXT)
 
 SOURCES := PYIN.cpp \
            VampYin.cpp \
+           LocalCandidatePYIN.cpp \
            Yin.cpp \
            YinUtil.cpp \
            MonoNote.cpp \
@@ -65,6 +66,7 @@ depend:
 
 PYIN.o: PYIN.h
 VampYin.o: VampYin.h
+LocalCandidatePYIN.o: LocalCandidatePYIN.h
 Yin.o: Yin.h
 MonoNoteParameters.o: MonoNoteParameters.h
 MonoNote.o: MonoNote.h
@@ -72,7 +74,7 @@ MonoPitch.o: MonoPitch.h
 MonoPitchHMM.o: MonoPitchHMM.h
 SparseHMM.o: SparseHMM.h
 MonoNoteHMM.o: MonoNoteHMM.h
-libmain.o: PYIN.h VampYin.h
+libmain.o: PYIN.h VampYin.h LocalCandidatePYIN.h
 test/TestMeanFilter.o: MeanFilter.h
 test/TestYin.o: Yin.h
 

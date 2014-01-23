@@ -82,7 +82,7 @@ Yin::process(const double *in) const {
 
 Yin::YinOutput
 Yin::processProbabilisticYin(const double *in) const {
-    
+
     double* yinBuffer = new double[m_yinBufferSize];
 
     // calculate aperiodicity function for all periods
@@ -90,18 +90,11 @@ Yin::processProbabilisticYin(const double *in) const {
     YinUtil::cumulativeDifference(yinBuffer, m_yinBufferSize);
 
     vector<double> peakProbability = YinUtil::yinProb(yinBuffer, m_threshDistr, m_yinBufferSize);
-    
-    // calculate overall "probability" from peak probability
-    double probSum = 0;
-    for (size_t iBin = 0; iBin < m_yinBufferSize; ++iBin)
-    {
-        probSum += peakProbability[iBin];
-    }
         
+    // basic yin output
     Yin::YinOutput yo(0,0,0);
     for (size_t iBuf = 0; iBuf < m_yinBufferSize; ++iBuf)
     {
-        yo.salience.push_back(peakProbability[iBuf]);
         if (peakProbability[iBuf] > 0)
         {
             double currentF0 = 
@@ -111,6 +104,11 @@ Yin::processProbabilisticYin(const double *in) const {
         }
     }
     
+    // add salience
+    for (size_t iBuf = 0; iBuf < m_yinBufferSize; ++iBuf) {
+        yo.salience.push_back(peakProbability[iBuf]);
+    }
+
     // std::cerr << yo.freqProb.size() << std::endl;
     
     delete [] yinBuffer;
