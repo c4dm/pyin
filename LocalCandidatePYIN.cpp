@@ -296,7 +296,11 @@ LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp
     {
         float minFrequency = m_fmin * std::pow(2,(3.0*iCandidate)/12);
         float maxFrequency = m_fmin * std::pow(2,(3.0*iCandidate+9)/12);
-        vector<double> peakProbability = YinUtil::yinProb(yinBuffer, m_threshDistr, yinBufferSize, m_inputSampleRate/maxFrequency, m_inputSampleRate/minFrequency);
+        vector<double> peakProbability = YinUtil::yinProb(yinBuffer, 
+                                                          m_threshDistr, 
+                                                          yinBufferSize, 
+                                                          m_inputSampleRate/maxFrequency, 
+                                                          m_inputSampleRate/minFrequency);
 
         vector<pair<double, double> > tempPitchProb;
         for (size_t iBuf = 0; iBuf < yinBufferSize; ++iBuf)
@@ -355,9 +359,36 @@ LocalCandidatePYIN::getRemainingFeatures()
         freqMean[iCandidate] = freqSum[iCandidate]*1.0/freqNumber[iCandidate];
     }
 
+    vector<size_t> duplicates;
+    for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate) {
+        for (size_t jCandidate = iCandidate+1; jCandidate < m_nCandidate; ++jCandidate) {
+            size_t countEqual = 0;
+            for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) 
+            {
+                if (fabs(pitchTracks[iCandidate][iFrame]/pitchTracks[jCandidate][iFrame]-1)<0.01)
+                countEqual++;
+            }
+            if (countEqual * 1.0 / nFrame > 0.8) {
+                if (freqNumber[iCandidate] > freqNumber[jCandidate]) {
+                    duplicates.push_back(jCandidate);
+                } else {
+                    duplicates.push_back(iCandidate);
+                }
+            }
+        }
+    }
+
     int actualCandidateNumber = 0;
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate) {
-        if ((freqNumber[iCandidate] > 0.8 * nFrame) && (iCandidate == 0 || fabs(freqMean[iCandidate]/freqMean[iCandidate-1]-1)<0.01))
+        bool isDuplicate = false;
+        for (size_t i = 0; i < duplicates.size(); ++i) {
+            std::cerr << duplicates[i] << std::endl;
+            if (duplicates[i] == iCandidate) {
+                isDuplicate = true;
+                break;
+            }
+        }
+        if (!isDuplicate && freqNumber[iCandidate] > 0.8*nFrame)
         {
             std::ostringstream convert;
             convert << actualCandidateNumber++;
