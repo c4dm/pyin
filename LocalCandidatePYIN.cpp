@@ -361,7 +361,6 @@ LocalCandidatePYIN::getRemainingFeatures()
         {
             std::ostringstream convert;
             convert << actualCandidateNumber++;
-            // f.label = sprintf (buffer, "%i", iCandidate);
             f.label = convert.str();
             std::cerr << freqNumber[iCandidate] << " " << freqMean[iCandidate] << std::endl;
             for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) 
