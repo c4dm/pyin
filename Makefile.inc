@@ -10,7 +10,7 @@ CXXFLAGS := -I. $(CXXFLAGS)
 PLUGIN := pyin$(PLUGIN_EXT)
 
 SOURCES := PYIN.cpp \
-           VampYin.cpp \
+           YinVamp.cpp \
            LocalCandidatePYIN.cpp \
            Yin.cpp \
            YinUtil.cpp \
@@ -65,7 +65,7 @@ depend:
 # DO NOT DELETE
 
 PYIN.o: PYIN.h
-VampYin.o: VampYin.h
+YinVamp.o: YinVamp.h
 LocalCandidatePYIN.o: LocalCandidatePYIN.h
 Yin.o: Yin.h
 MonoNoteParameters.o: MonoNoteParameters.h
@@ -74,7 +74,7 @@ MonoPitch.o: MonoPitch.h
 MonoPitchHMM.o: MonoPitchHMM.h
 SparseHMM.o: SparseHMM.h
 MonoNoteHMM.o: MonoNoteHMM.h
-libmain.o: PYIN.h VampYin.h LocalCandidatePYIN.h
+libmain.o: PYIN.h YinVamp.h LocalCandidatePYIN.h
 test/TestMeanFilter.o: MeanFilter.h
 test/TestYin.o: Yin.h
 

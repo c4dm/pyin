@@ -11,18 +11,18 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _VAMPYIN_H_
-#define _VAMPYIN_H_
+#ifndef _YINVAMP_H_
+#define _YINVAMP_H_
 
 #include <vamp-sdk/Plugin.h>
 
 #include "Yin.h"
 
-class VampYin : public Vamp::Plugin
+class YinVamp : public Vamp::Plugin
 {
 public:
-    VampYin(float inputSampleRate);
-    virtual ~VampYin();
+    YinVamp(float inputSampleRate);
+    virtual ~YinVamp();
 
     std::string getIdentifier() const;
     std::string getName() const;

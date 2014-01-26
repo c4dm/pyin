@@ -11,7 +11,7 @@
     COPYING included with this distribution for more information.
 */
 
-#include "VampYin.h"
+#include "YinVamp.h"
 #include "MonoNote.h"
 
 #include "vamp-sdk/FFT.h"
@@ -28,7 +28,7 @@ using std::vector;
 using Vamp::RealTime;
 
 
-VampYin::VampYin(float inputSampleRate) :
+YinVamp::YinVamp(float inputSampleRate) :
     Plugin(inputSampleRate),
     m_channels(0),
     m_stepSize(256),
@@ -45,36 +45,36 @@ VampYin::VampYin(float inputSampleRate) :
 {
 }
 
-VampYin::~VampYin()
+YinVamp::~YinVamp()
 {
 }
 
 string
-VampYin::getIdentifier() const
+YinVamp::getIdentifier() const
 {
     return "yin";
 }
 
 string
-VampYin::getName() const
+YinVamp::getName() const
 {
     return "Yin";
 }
 
 string
-VampYin::getDescription() const
+YinVamp::getDescription() const
 {
     return "A vamp implementation of the Yin algorithm for monophonic frequency estimation.";
 }
 
 string
-VampYin::getMaker() const
+YinVamp::getMaker() const
 {
     return "Matthias Mauch";
 }
 
 int
-VampYin::getPluginVersion() const
+YinVamp::getPluginVersion() const
 {
     // Increment this each time you release a version that behaves
     // differently from the previous one
@@ -82,43 +82,43 @@ VampYin::getPluginVersion() const
 }
 
 string
-VampYin::getCopyright() const
+YinVamp::getCopyright() const
 {
     return "GPL";
 }
 
-VampYin::InputDomain
-VampYin::getInputDomain() const
+YinVamp::InputDomain
+YinVamp::getInputDomain() const
 {
     return TimeDomain;
 }
 
 size_t
-VampYin::getPreferredBlockSize() const
+YinVamp::getPreferredBlockSize() const
 {
     return 2048;
 }
 
 size_t 
-VampYin::getPreferredStepSize() const
+YinVamp::getPreferredStepSize() const
 {
     return 256;
 }
 
 size_t
-VampYin::getMinChannelCount() const
+YinVamp::getMinChannelCount() const
 {
     return 1;
 }
 
 size_t
-VampYin::getMaxChannelCount() const
+YinVamp::getMaxChannelCount() const
 {
     return 1;
 }
 
-VampYin::ParameterList
-VampYin::getParameterDescriptors() const
+YinVamp::ParameterList
+YinVamp::getParameterDescriptors() const
 {
     ParameterList list;
     
@@ -166,7 +166,7 @@ VampYin::getParameterDescriptors() const
 }
 
 float
-VampYin::getParameter(string identifier) const
+YinVamp::getParameter(string identifier) const
 {
     if (identifier == "yinThreshold") {
         return m_yinParameter;
@@ -178,7 +178,7 @@ VampYin::getParameter(string identifier) const
 }
 
 void
-VampYin::setParameter(string identifier, float value) 
+YinVamp::setParameter(string identifier, float value) 
 {
     if (identifier == "yinThreshold")
     {
@@ -190,26 +190,26 @@ VampYin::setParameter(string identifier, float value)
     }
 }
 
-VampYin::ProgramList
-VampYin::getPrograms() const
+YinVamp::ProgramList
+YinVamp::getPrograms() const
 {
     ProgramList list;
     return list;
 }
 
 string
-VampYin::getCurrentProgram() const
+YinVamp::getCurrentProgram() const
 {
     return ""; // no programs
 }
 
 void
-VampYin::selectProgram(string name)
+YinVamp::selectProgram(string name)
 {
 }
 
-VampYin::OutputList
-VampYin::getOutputDescriptors() const
+YinVamp::OutputList
+YinVamp::getOutputDescriptors() const
 {
     OutputList outputs;
 
@@ -284,13 +284,13 @@ VampYin::getOutputDescriptors() const
 }
 
 bool
-VampYin::initialise(size_t channels, size_t stepSize, size_t blockSize)
+YinVamp::initialise(size_t channels, size_t stepSize, size_t blockSize)
 {
     if (channels < getMinChannelCount() ||
 	channels > getMaxChannelCount()) return false;
 
 /*
-    std::cerr << "VampYin::initialise: channels = " << channels
+    std::cerr << "YinVamp::initialise: channels = " << channels
           << ", stepSize = " << stepSize << ", blockSize = " << blockSize
           << std::endl;
 */
@@ -304,19 +304,19 @@ VampYin::initialise(size_t channels, size_t stepSize, size_t blockSize)
 }
 
 void
-VampYin::reset()
+YinVamp::reset()
 {    
     m_yin.setThreshold(m_yinParameter);
     m_yin.setFrameSize(m_blockSize);
 /*        
-    std::cerr << "VampYin::reset: yin threshold set to " << (m_yinParameter)
+    std::cerr << "YinVamp::reset: yin threshold set to " << (m_yinParameter)
           << ", blockSize = " << m_blockSize
           << std::endl;
 */
 }
 
-VampYin::FeatureSet
-VampYin::process(const float *const *inputBuffers, RealTime timestamp)
+YinVamp::FeatureSet
+YinVamp::process(const float *const *inputBuffers, RealTime timestamp)
 {
     timestamp = timestamp + Vamp::RealTime::frame2RealTime(m_blockSize/4, lrintf(m_inputSampleRate));
     FeatureSet fs;
@@ -325,13 +325,13 @@ VampYin::process(const float *const *inputBuffers, RealTime timestamp)
     for (size_t i = 0; i < m_blockSize; ++i) dInputBuffers[i] = inputBuffers[0][i];
     
     Yin::YinOutput yo = m_yin.process(dInputBuffers);
-    // std::cerr << "f0 in VampYin: " << yo.f0 << std::endl;
+    // std::cerr << "f0 in YinVamp: " << yo.f0 << std::endl;
     Feature f;
     f.hasTimestamp = true;
     f.timestamp = timestamp;
     if (m_outputUnvoiced == 0.0f)
     {
-        // std::cerr << "f0 in VampYin: " << yo.f0 << std::endl;
+        // std::cerr << "f0 in YinVamp: " << yo.f0 << std::endl;
         if (yo.f0 > 0 && yo.f0 < m_fmax && yo.f0 > m_fmin) {
             f.values.push_back(yo.f0);
             fs[m_outNoF0].push_back(f);
@@ -371,8 +371,8 @@ VampYin::process(const float *const *inputBuffers, RealTime timestamp)
     return fs;
 }
 
-VampYin::FeatureSet
-VampYin::getRemainingFeatures()
+YinVamp::FeatureSet
+YinVamp::getRemainingFeatures()
 {
     FeatureSet fs;
     return fs;
