@@ -14,11 +14,11 @@
 #include <vamp/vamp.h>
 #include <vamp-sdk/PluginAdapter.h>
 
-#include "PYIN.h"
+#include "PYinVamp.h"
 #include "YinVamp.h"
 #include "LocalCandidatePYIN.h"
 
-static Vamp::PluginAdapter<PYIN> pyinPluginAdapter;
+static Vamp::PluginAdapter<PYinVamp> pyinvampPluginAdapter;
 static Vamp::PluginAdapter<YinVamp> yinvampPluginAdapter;
 static Vamp::PluginAdapter<LocalCandidatePYIN> localCandidatePYINPluginAdapter;
 
@@ -28,7 +28,7 @@ vampGetPluginDescriptor(unsigned int version, unsigned int index)
     if (version < 1) return 0;
 
     switch (index) {
-    case  0: return pyinPluginAdapter.getDescriptor();
+    case  0: return pyinvampPluginAdapter.getDescriptor();
     case  1: return yinvampPluginAdapter.getDescriptor();
     case  2: return localCandidatePYINPluginAdapter.getDescriptor();
     default: return 0;

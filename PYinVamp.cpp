@@ -11,7 +11,7 @@
     COPYING included with this distribution for more information.
 */
 
-#include "PYIN.h"
+#include "PYinVamp.h"
 #include "MonoNote.h"
 #include "MonoPitch.h"
 
@@ -29,7 +29,7 @@ using std::vector;
 using Vamp::RealTime;
 
 
-PYIN::PYIN(float inputSampleRate) :
+PYinVamp::PYinVamp(float inputSampleRate) :
     Plugin(inputSampleRate),
     m_channels(0),
     m_stepSize(256),
@@ -50,36 +50,36 @@ PYIN::PYIN(float inputSampleRate) :
 {
 }
 
-PYIN::~PYIN()
+PYinVamp::~PYinVamp()
 {
 }
 
 string
-PYIN::getIdentifier() const
+PYinVamp::getIdentifier() const
 {
     return "pyin";
 }
 
 string
-PYIN::getName() const
+PYinVamp::getName() const
 {
     return "pYin";
 }
 
 string
-PYIN::getDescription() const
+PYinVamp::getDescription() const
 {
     return "Monophonic pitch and note tracking based on a probabilistic Yin extension.";
 }
 
 string
-PYIN::getMaker() const
+PYinVamp::getMaker() const
 {
     return "Matthias Mauch";
 }
 
 int
-PYIN::getPluginVersion() const
+PYinVamp::getPluginVersion() const
 {
     // Increment this each time you release a version that behaves
     // differently from the previous one
@@ -87,43 +87,43 @@ PYIN::getPluginVersion() const
 }
 
 string
-PYIN::getCopyright() const
+PYinVamp::getCopyright() const
 {
     return "GPL";
 }
 
-PYIN::InputDomain
-PYIN::getInputDomain() const
+PYinVamp::InputDomain
+PYinVamp::getInputDomain() const
 {
     return TimeDomain;
 }
 
 size_t
-PYIN::getPreferredBlockSize() const
+PYinVamp::getPreferredBlockSize() const
 {
     return 2048;
 }
 
 size_t 
-PYIN::getPreferredStepSize() const
+PYinVamp::getPreferredStepSize() const
 {
     return 256;
 }
 
 size_t
-PYIN::getMinChannelCount() const
+PYinVamp::getMinChannelCount() const
 {
     return 1;
 }
 
 size_t
-PYIN::getMaxChannelCount() const
+PYinVamp::getMaxChannelCount() const
 {
     return 1;
 }
 
-PYIN::ParameterList
-PYIN::getParameterDescriptors() const
+PYinVamp::ParameterList
+PYinVamp::getParameterDescriptors() const
 {
     ParameterList list;
     
@@ -167,7 +167,7 @@ PYIN::getParameterDescriptors() const
 }
 
 float
-PYIN::getParameter(string identifier) const
+PYinVamp::getParameter(string identifier) const
 {
     if (identifier == "threshdistr") {
             return m_threshDistr;
@@ -179,7 +179,7 @@ PYIN::getParameter(string identifier) const
 }
 
 void
-PYIN::setParameter(string identifier, float value) 
+PYinVamp::setParameter(string identifier, float value) 
 {
     if (identifier == "threshdistr")
     {
@@ -192,26 +192,26 @@ PYIN::setParameter(string identifier, float value)
     
 }
 
-PYIN::ProgramList
-PYIN::getPrograms() const
+PYinVamp::ProgramList
+PYinVamp::getPrograms() const
 {
     ProgramList list;
     return list;
 }
 
 string
-PYIN::getCurrentProgram() const
+PYinVamp::getCurrentProgram() const
 {
     return ""; // no programs
 }
 
 void
-PYIN::selectProgram(string name)
+PYinVamp::selectProgram(string name)
 {
 }
 
-PYIN::OutputList
-PYIN::getOutputDescriptors() const
+PYinVamp::OutputList
+PYinVamp::getOutputDescriptors() const
 {
     OutputList outputs;
 
@@ -317,13 +317,13 @@ PYIN::getOutputDescriptors() const
 }
 
 bool
-PYIN::initialise(size_t channels, size_t stepSize, size_t blockSize)
+PYinVamp::initialise(size_t channels, size_t stepSize, size_t blockSize)
 {
     if (channels < getMinChannelCount() ||
 	channels > getMaxChannelCount()) return false;
 
 /*
-    std::cerr << "PYIN::initialise: channels = " << channels
+    std::cerr << "PYinVamp::initialise: channels = " << channels
           << ", stepSize = " << stepSize << ", blockSize = " << blockSize
           << std::endl;
 */
@@ -337,7 +337,7 @@ PYIN::initialise(size_t channels, size_t stepSize, size_t blockSize)
 }
 
 void
-PYIN::reset()
+PYinVamp::reset()
 {    
     m_yin.setThresholdDistr(m_threshDistr);
     m_yin.setFrameSize(m_blockSize);
@@ -345,14 +345,14 @@ PYIN::reset()
     m_pitchProb.clear();
     m_timestamp.clear();
 /*    
-    std::cerr << "PYIN::reset"
+    std::cerr << "PYinVamp::reset"
           << ", blockSize = " << m_blockSize
           << std::endl;
 */
 }
 
-PYIN::FeatureSet
-PYIN::process(const float *const *inputBuffers, RealTime timestamp)
+PYinVamp::FeatureSet
+PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
 {
     timestamp = timestamp + Vamp::RealTime::frame2RealTime(m_blockSize/4, lrintf(m_inputSampleRate));
     FeatureSet fs;
@@ -411,8 +411,8 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
     return fs;
 }
 
-PYIN::FeatureSet
-PYIN::getRemainingFeatures()
+PYinVamp::FeatureSet
+PYinVamp::getRemainingFeatures()
 {
     FeatureSet fs;
     Feature f;
