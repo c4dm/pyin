@@ -30,6 +30,10 @@ const std::vector<int>
 SparseHMM::decodeViterbi(std::vector<vector<double> > obsProb,
                          vector<double> *scale) 
 {
+    if (obsProb.size() < 1) {
+        return vector<int>();
+    }
+
     size_t nState = init.size();
     size_t nFrame = obsProb.size();
     
