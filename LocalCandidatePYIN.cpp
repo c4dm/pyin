@@ -221,8 +221,8 @@ LocalCandidatePYIN::getOutputDescriptors() const
     d.name = "Pitch track candidates";
     d.description = "Multiple candidate pitch tracks.";
     d.unit = "Hz";
-    d.hasFixedBinCount = false;
-    // d.binCount = 1;
+    d.hasFixedBinCount = true;
+    d.binCount = m_nCandidate;
     d.hasKnownExtents = true;
     d.minValue = m_fmin;
     d.maxValue = 500;
@@ -330,7 +330,7 @@ LocalCandidatePYIN::getRemainingFeatures()
     f.hasDuration = false;
     f.values.push_back(0);
 
-    std::cerr << "in remaining features" << std::endl;
+    // std::cerr << "in remaining features" << std::endl;
 
     if (m_pitchProb.empty()) {
         return fs;
@@ -359,6 +359,7 @@ LocalCandidatePYIN::getRemainingFeatures()
         freqMean[iCandidate] = freqSum[iCandidate]*1.0/freqNumber[iCandidate];
     }
 
+    // find near duplicate pitch tracks
     vector<size_t> duplicates;
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate) {
         for (size_t jCandidate = iCandidate+1; jCandidate < m_nCandidate; ++jCandidate) {
@@ -378,32 +379,41 @@ LocalCandidatePYIN::getRemainingFeatures()
         }
     }
 
-    int actualCandidateNumber = 0;
+    // now find non-duplicate pitch tracks
+    vector<size_t> actualCandidates;
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate) {
         bool isDuplicate = false;
         for (size_t i = 0; i < duplicates.size(); ++i) {
-            std::cerr << duplicates[i] << std::endl;
+            // std::cerr << duplicates[i] << std::endl;
             if (duplicates[i] == iCandidate) {
                 isDuplicate = true;
                 break;
             }
         }
-        if (!isDuplicate && freqNumber[iCandidate] > 0.8*nFrame)
-        {
-            std::ostringstream convert;
-            convert << actualCandidateNumber++;
-            f.label = convert.str();
-            std::cerr << freqNumber[iCandidate] << " " << freqMean[iCandidate] << std::endl;
-            for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) 
+        if (!isDuplicate && (freqNumber[iCandidate] > 0.5*nFrame)) {
+            actualCandidates.push_back(iCandidate);
+            // std::cerr << iCandidate << std::endl;
+        }
+    }
+
+    // finally write them out
+    for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) 
+    {
+        f.timestamp = m_timestamp[iFrame];
+        f.values.clear();
+        for (size_t iCandidate = 0; iCandidate < actualCandidates.size(); ++iCandidate) {
+            // std::ostringstream convert;
+            // convert << actualCandidateNumber++;
+            // f.label = convert.str();
+            // std::cerr << freqNumber[iCandidate] << " " << freqMean[iCandidate] << std::endl;
+            if (pitchTracks[actualCandidates[iCandidate]][iFrame] > 0)
             {
-                if (pitchTracks[iCandidate][iFrame] > 0)
-                {
-                    f.values[0] = pitchTracks[iCandidate][iFrame];
-                    f.timestamp = m_timestamp[iFrame];
-                    fs[m_oPitchTrackCandidates].push_back(f);
-                }
+                f.values.push_back(pitchTracks[actualCandidates[iCandidate]][iFrame]);
+            } else {
+                f.values.push_back(0);
             }
         }
+        fs[m_oPitchTrackCandidates].push_back(f);
         // std::cerr << freqNumber[iCandidate] << " " << (freqSum[iCandidate]*1.0/freqNumber[iCandidate]) << std::endl;
     }
 
