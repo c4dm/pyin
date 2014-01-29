@@ -11,18 +11,18 @@
     COPYING included with this distribution for more information.
 */
 
-#ifndef _VAMPYIN_H_
-#define _VAMPYIN_H_
+#ifndef _PYINVAMP_H_
+#define _PYINVAMP_H_
 
 #include <vamp-sdk/Plugin.h>
 
 #include "Yin.h"
 
-class VampYin : public Vamp::Plugin
+class PYinVamp : public Vamp::Plugin
 {
 public:
-    VampYin(float inputSampleRate);
-    virtual ~VampYin();
+    PYinVamp(float inputSampleRate);
+    virtual ~PYinVamp();
 
     std::string getIdentifier() const;
     std::string getName() const;
@@ -63,13 +63,17 @@ protected:
     float m_fmax;
     Yin m_yin;
     
-    mutable int m_outNoF0;
-    mutable int m_outNoPeriodicity;
-    mutable int m_outNoRms;
-    mutable int m_outNoSalience;
+    mutable int m_oF0Candidates;
+    mutable int m_oF0Probs;
+    mutable int m_oVoicedProb;
+    mutable int m_oCandidateSalience;
+    mutable int m_oSmoothedPitchTrack;
+    mutable int m_oNotes;
 
-    float m_yinParameter;
+    float m_threshDistr;
     float m_outputUnvoiced;
+    vector<vector<pair<double, double> > > m_pitchProb;
+    vector<Vamp::RealTime> m_timestamp;
 };
 
 #endif
