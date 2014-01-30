@@ -25,9 +25,11 @@
 // #include <iostream>
 #include <cmath>
 #include <complex>
+#include <map>
 
 using std::string;
 using std::vector;
+using std::map;
 using Vamp::RealTime;
 
 
@@ -221,17 +223,15 @@ LocalCandidatePYIN::getOutputDescriptors() const
     d.name = "Pitch track candidates";
     d.description = "Multiple candidate pitch tracks.";
     d.unit = "Hz";
-    d.hasFixedBinCount = true;
-    d.binCount = m_nCandidate;
+    d.hasFixedBinCount = false;
     d.hasKnownExtents = true;
     d.minValue = m_fmin;
-    d.maxValue = 500;
+    d.maxValue = 500; //!!!???
     d.isQuantized = false;
     d.sampleType = OutputDescriptor::FixedSampleRate;
     d.sampleRate = (m_inputSampleRate / m_stepSize);
     d.hasDuration = false;
     outputs.push_back(d);
-    // m_oPitchTrackCandidates = outputNumber++;
 
     return outputs;
 }
@@ -279,7 +279,6 @@ LocalCandidatePYIN::FeatureSet
 LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp)
 {
     timestamp = timestamp + Vamp::RealTime::frame2RealTime(m_blockSize/4, lrintf(m_inputSampleRate));
-    FeatureSet fs;
     
     double *dInputBuffers = new double[m_blockSize];
     for (size_t i = 0; i < m_blockSize; ++i) dInputBuffers[i] = inputBuffers[0][i];
@@ -318,22 +317,19 @@ LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp
     }
     m_timestamp.push_back(timestamp);
 
-    return fs;
+    return FeatureSet();
 }
 
 LocalCandidatePYIN::FeatureSet
 LocalCandidatePYIN::getRemainingFeatures()
 {
-    FeatureSet fs;
-    Feature f;
-    f.hasTimestamp = true;
-    f.hasDuration = false;
-    f.values.push_back(0);
+    // timestamp -> candidate number -> value
+    map<RealTime, map<int, float> > featureValues;
 
     // std::cerr << "in remaining features" << std::endl;
 
     if (m_pitchProb.empty()) {
-        return fs;
+        return FeatureSet();
     }
 
     // MONO-PITCH STUFF
@@ -380,7 +376,10 @@ LocalCandidatePYIN::getRemainingFeatures()
     }
 
     // now find non-duplicate pitch tracks
-    vector<size_t> actualCandidates;
+    map<int, int> candidateActuals;
+    map<int, std::string> candidateLabels;
+
+    int actualCandidateNumber = 0;
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate) {
         bool isDuplicate = false;
         for (size_t i = 0; i < duplicates.size(); ++i) {
@@ -390,34 +389,48 @@ LocalCandidatePYIN::getRemainingFeatures()
                 break;
             }
         }
-        if (!isDuplicate && (freqNumber[iCandidate] > 0.5*nFrame)) {
-            actualCandidates.push_back(iCandidate);
-            // std::cerr << iCandidate << std::endl;
-        }
-    }
-
-    // finally write them out
-    for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) 
-    {
-        f.timestamp = m_timestamp[iFrame];
-        f.values.clear();
-        for (size_t iCandidate = 0; iCandidate < actualCandidates.size(); ++iCandidate) {
-            // std::ostringstream convert;
-            // convert << actualCandidateNumber++;
-            // f.label = convert.str();
-            // std::cerr << freqNumber[iCandidate] << " " << freqMean[iCandidate] << std::endl;
-            if (pitchTracks[actualCandidates[iCandidate]][iFrame] > 0)
+        if (!isDuplicate && freqNumber[iCandidate] > 0.8*nFrame)
+        {
+            std::ostringstream convert;
+            convert << actualCandidateNumber++;
+            candidateLabels[iCandidate] = convert.str();
+            candidateActuals[iCandidate] = actualCandidateNumber;
+            std::cerr << freqNumber[iCandidate] << " " << freqMean[iCandidate] << std::endl;
+            for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) 
             {
-                f.values.push_back(pitchTracks[actualCandidates[iCandidate]][iFrame]);
-            } else {
-                f.values.push_back(0);
+                if (pitchTracks[iCandidate][iFrame] > 0)
+                {
+                    featureValues[m_timestamp[iFrame]][iCandidate] = 
+                        pitchTracks[iCandidate][iFrame];
+                }
             }
         }
-        fs[m_oPitchTrackCandidates].push_back(f);
-        // std::cerr << freqNumber[iCandidate] << " " << (freqSum[iCandidate]*1.0/freqNumber[iCandidate]) << std::endl;
+        // fs[m_oPitchTrackCandidates].push_back(f);
     }
 
-    // only retain those that are close to their means
+    // adapt our features so as to return a stack of candidate values
+    // per frame
+
+    FeatureSet fs;
+
+    for (map<RealTime, map<int, float> >::const_iterator i =
+             featureValues.begin(); i != featureValues.end(); ++i) {
+        Feature f;
+        f.hasTimestamp = true;
+        f.timestamp = i->first;
+        int nextCandidate = candidateActuals.begin()->second;
+        for (map<int, float>::const_iterator j = 
+                 i->second.begin(); j != i->second.end(); ++j) {
+            while (candidateActuals[j->first] > nextCandidate) {
+                f.values.push_back(0);
+                ++nextCandidate;
+            }
+            f.values.push_back(j->second);
+            nextCandidate = j->first + 1;
+        }
+        //!!! can't use labels?
+        fs[0].push_back(f);
+    }
 
     return fs;
 }
