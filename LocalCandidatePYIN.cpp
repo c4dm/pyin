@@ -339,17 +339,26 @@ LocalCandidatePYIN::getRemainingFeatures()
     vector<float> freqSum = vector<float>(m_nCandidate);
     vector<float> freqNumber = vector<float>(m_nCandidate);
     vector<float> freqMean = vector<float>(m_nCandidate);
-
+    
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate)
     {
         pitchTracks.push_back(vector<float>(nFrame));
         vector<float> mpOut = mp.process(m_pitchProb[iCandidate]);
+        float prevFreq = 0;
         for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
         {
             if (mpOut[iFrame] > 0) {
+                if (prevFreq>0 && fabs(log2(mpOut[iFrame]/prevFreq)) > 0.1) {
+                    for (size_t jFrame = iFrame; jFrame != -1; --jFrame) {
+                        // hack: setting all freqs to 0 -- will be eliminated later
+                        pitchTracks[iCandidate][jFrame] = 0;
+                    }
+                    break;
+                }
                 pitchTracks[iCandidate][iFrame] = mpOut[iFrame];
                 freqSum[iCandidate] += mpOut[iFrame];
                 freqNumber[iCandidate]++;
+                prevFreq = mpOut[iFrame];
             }
         }
         freqMean[iCandidate] = freqSum[iCandidate]*1.0/freqNumber[iCandidate];
