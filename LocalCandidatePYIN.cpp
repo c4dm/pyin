@@ -349,7 +349,7 @@ LocalCandidatePYIN::getRemainingFeatures()
         {
             if (mpOut[iFrame] > 0) {
                 if (prevFreq>0 && fabs(log2(mpOut[iFrame]/prevFreq)) > 0.1) {
-                    for (size_t jFrame = iFrame; jFrame != -1; --jFrame) {
+                    for (int jFrame = iFrame; jFrame != -1; --jFrame) {
                         // hack: setting all freqs to 0 -- will be eliminated later
                         pitchTracks[iCandidate][jFrame] = 0;
                     }
