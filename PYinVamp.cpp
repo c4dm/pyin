@@ -357,8 +357,16 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
     timestamp = timestamp + Vamp::RealTime::frame2RealTime(m_blockSize/4, lrintf(m_inputSampleRate));
     FeatureSet fs;
     
+    float rms = 0;
+    
     double *dInputBuffers = new double[m_blockSize];
-    for (size_t i = 0; i < m_blockSize; ++i) dInputBuffers[i] = inputBuffers[0][i];
+    for (size_t i = 0; i < m_blockSize; ++i) {
+        dInputBuffers[i] = inputBuffers[0][i];
+        rms += inputBuffers[0][i] * inputBuffers[0][i];
+    }
+    rms /= m_blockSize;
+    rms = sqrt(rms);
+    bool isLowVolume = (rms < 0.01);
     
     Yin::YinOutput yo = m_yin.processProbabilisticYin(dInputBuffers);
     delete [] dInputBuffers;
@@ -369,8 +377,12 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
     for (size_t iCandidate = 0; iCandidate < yo.freqProb.size(); ++iCandidate)
     {
         double tempPitch = 12 * std::log(yo.freqProb[iCandidate].first/440)/std::log(2.) + 69;
-        tempPitchProb.push_back(pair<double, double>
-            (tempPitch, yo.freqProb[iCandidate].second));
+        if (!isLowVolume)
+            tempPitchProb.push_back(pair<double, double>
+                (tempPitch, yo.freqProb[iCandidate].second));
+        else
+            tempPitchProb.push_back(pair<double, double>
+                (tempPitch, yo.freqProb[iCandidate].second*.01));
     }
     m_pitchProb.push_back(tempPitchProb);
     m_timestamp.push_back(timestamp);

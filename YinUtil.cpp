@@ -233,9 +233,37 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t yinBu
     // double factor = 1.0 / (0.25 * (nThresholdInt+1) * (nThresholdInt + 1)); // factor to scale down triangular weight
     size_t minInd = 0;
     float minVal = 42.f;
-    while (currThreshInd != -1 && tau < maxTau)
+    // while (currThreshInd != -1 && tau < maxTau)
+    // {
+    //     if (yinBuffer[tau] < thresholds[currThreshInd])
+    //     {
+    //         while (tau + 1 < maxTau && yinBuffer[tau+1] < yinBuffer[tau])
+    //         {
+    //             tau++;
+    //         }
+    //         // tau is now local minimum
+    //         // std::cerr << tau << " " << currThreshInd << " "<< thresholds[currThreshInd] << " " << distribution[currThreshInd] << std::endl;
+    //         if (yinBuffer[tau] < minVal && tau > 2){
+    //             minVal = yinBuffer[tau];
+    //             minInd = tau;
+    //         }
+    //         peakProb[tau] += distribution[currThreshInd];
+    //         currThreshInd--;
+    //     } else {
+    //         tau++;
+    //     }
+    // }
+    // double nonPeakProb = 1;
+    // for (size_t i = minTau; i < maxTau; ++i)
+    // {
+    //     nonPeakProb -= peakProb[i];
+    // }
+    // 
+    // std::cerr << tau << " " << currThreshInd << " "<< thresholds[currThreshInd] << " " << distribution[currThreshInd] << std::endl;
+    float sumProb = 0;
+    while (tau < maxTau)
     {
-        if (yinBuffer[tau] < thresholds[currThreshInd])
+        if (yinBuffer[tau] < thresholds[thresholds.size()-1] && yinBuffer[tau+1] < yinBuffer[tau])
         {
             while (tau + 1 < maxTau && yinBuffer[tau+1] < yinBuffer[tau])
             {
@@ -247,18 +275,29 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t yinBu
                 minVal = yinBuffer[tau];
                 minInd = tau;
             }
-            peakProb[tau] += distribution[currThreshInd];
-            currThreshInd--;
+            currThreshInd = nThresholdInt-1;
+            while (thresholds[currThreshInd] > yinBuffer[tau] && currThreshInd > -1) {
+                // std::cerr << distribution[currThreshInd] << std::endl;
+                peakProb[tau] += distribution[currThreshInd];
+                currThreshInd--;
+            }
+            // peakProb[tau] = 1 - yinBuffer[tau];
+            sumProb += peakProb[tau];
+            tau++;
         } else {
             tau++;
         }
     }
+    
     double nonPeakProb = 1;
-    for (size_t i = minTau; i < maxTau; ++i)
-    {
-        nonPeakProb -= peakProb[i];
+    if (sumProb > 0) {
+        for (size_t i = minTau; i < maxTau; ++i)
+        {
+            peakProb[i] = peakProb[i] / sumProb * peakProb[minInd];
+            nonPeakProb -= peakProb[i];
+        }
     }
-    // std::cerr << nonPeakProb << std::endl;
+    std::cerr << nonPeakProb << std::endl;
     if (minInd > 0)
     {
         // std::cerr << "min set " << minVal << " " << minInd << " " << nonPeakProb << std::endl; 
@@ -278,55 +317,61 @@ YinUtil::parabolicInterpolation(const double *yinBuffer, const size_t tau, const
     }
     
     double betterTau = 0.0;
-    size_t x0;
-    size_t x2;
+    // size_t x0;
+    // size_t x2;
 
-    if (tau < 1) 
-    {
-        x0 = tau;
-    } else {
-        x0 = tau - 1;
-    }
-    
-    if (tau + 1 < yinBufferSize) 
-    {
-        x2 = tau + 1;
-    } else {
-        x2 = tau;
-    }
-    
-    if (x0 == tau) 
-    {
-        if (yinBuffer[tau] <= yinBuffer[x2]) 
-        {
-            betterTau = tau;
-        } else {
-            betterTau = x2;
-        }
-    } 
-    else if (x2 == tau) 
-    {
-        if (yinBuffer[tau] <= yinBuffer[x0]) 
-        {
-            betterTau = tau;
-        } 
-        else 
-        {
-            betterTau = x0;
-        }
-    } 
-    else 
-    {
+    // if (tau < 1) 
+    // {
+    //     x0 = tau;
+    // } else {
+    //     x0 = tau - 1;
+    // }
+    // 
+    // if (tau + 1 < yinBufferSize) 
+    // {
+    //     x2 = tau + 1;
+    // } else {
+    //     x2 = tau;
+    // }
+    // 
+    // if (x0 == tau) 
+    // {
+    //     if (yinBuffer[tau] <= yinBuffer[x2]) 
+    //     {
+    //         betterTau = tau;
+    //     } else {
+    //         betterTau = x2;
+    //     }
+    // } 
+    // else if (x2 == tau) 
+    // {
+    //     if (yinBuffer[tau] <= yinBuffer[x0]) 
+    //     {
+    //         betterTau = tau;
+    //     } 
+    //     else 
+    //     {
+    //         betterTau = x0;
+    //     }
+    // } 
+    // else 
+    // {
+    if (tau > 0 && tau < yinBufferSize-1) {
         float s0, s1, s2;
-        s0 = yinBuffer[x0];
+        s0 = yinBuffer[tau-1];
         s1 = yinBuffer[tau];
-        s2 = yinBuffer[x2];
+        s2 = yinBuffer[tau+1];
         // fixed AUBIO implementation, thanks to Karl Helgason:
         // (2.0f * s1 - s2 - s0) was incorrectly multiplied with -1
-        betterTau = tau + (s2 - s0) / (2 * (2 * s1 - s2 - s0));
         
-        // std::cerr << tau << " --> " << betterTau << std::endl;
+        double adjustment = (s2 - s0) / (2 * (2 * s1 - s2 - s0));
         
+        if (abs(adjustment)>1) adjustment = 0;
+        
+        betterTau = tau + adjustment;
+    } else {
+        std::cerr << "WARNING: can't do interpolation at the edge (tau = " << tau << "), will return un-interpolated value.\n";
+        betterTau = tau;
     }
     return betterTau;
 }

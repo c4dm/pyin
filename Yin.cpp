@@ -57,7 +57,7 @@ Yin::process(const double *in) const {
     double aperiodicity;
     double f0;
     
-    if (tau!=0)
+    if (tau!=0 && tau!=m_yinBufferSize-1)
     {
         interpolatedTau = YinUtil::parabolicInterpolation(yinBuffer, abs(tau), m_yinBufferSize);
         f0 = m_inputSampleRate * (1.0 / interpolatedTau);
@@ -93,7 +93,7 @@ Yin::processProbabilisticYin(const double *in) const {
         
     // basic yin output
     Yin::YinOutput yo(0,0,0);
-    for (size_t iBuf = 0; iBuf < m_yinBufferSize; ++iBuf)
+    for (size_t iBuf = 1; iBuf < m_yinBufferSize-1; ++iBuf)
     {
         if (peakProbability[iBuf] > 0)
         {

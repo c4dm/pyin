@@ -27,6 +27,8 @@
 #include <complex>
 #include <map>
 
+#include <boost/math/distributions.hpp>
+
 using std::string;
 using std::vector;
 using std::map;
@@ -46,7 +48,7 @@ LocalCandidatePYIN::LocalCandidatePYIN(float inputSampleRate) :
     m_outputUnvoiced(0.0f),
     m_pitchProb(0),
     m_timestamp(0),
-    m_nCandidate(20)
+    m_nCandidate(10)
 {
 }
 
@@ -265,7 +267,7 @@ LocalCandidatePYIN::reset()
     m_pitchProb.clear();
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate)
     {
-        m_pitchProb.push_back(vector<vector<pair<double, double> > >());
+        m_pitchProb.push_back(vector<pair<double, double> >());
     }
     m_timestamp.clear();
 /*    
@@ -278,7 +280,7 @@ LocalCandidatePYIN::reset()
 LocalCandidatePYIN::FeatureSet
 LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp)
 {
-    timestamp = timestamp + Vamp::RealTime::frame2RealTime(m_blockSize/4, lrintf(m_inputSampleRate));
+    timestamp = timestamp - Vamp::RealTime::frame2RealTime(m_blockSize, lrintf(m_inputSampleRate));
     
     double *dInputBuffers = new double[m_blockSize];
     for (size_t i = 0; i < m_blockSize; ++i) dInputBuffers[i] = inputBuffers[0][i];
@@ -291,30 +293,28 @@ LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp
 
     YinUtil::cumulativeDifference(yinBuffer, yinBufferSize);
     
-    for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate)
-    {
-        float minFrequency = m_fmin * std::pow(2,(3.0*iCandidate)/12);
-        float maxFrequency = m_fmin * std::pow(2,(3.0*iCandidate+9)/12);
-        vector<double> peakProbability = YinUtil::yinProb(yinBuffer, 
-                                                          m_threshDistr, 
-                                                          yinBufferSize, 
-                                                          m_inputSampleRate/maxFrequency, 
-                                                          m_inputSampleRate/minFrequency);
+    float minFrequency = 60;
+    float maxFrequency = 900;
+    vector<double> peakProbability = YinUtil::yinProb(yinBuffer, 
+                                                      m_threshDistr, 
+                                                      yinBufferSize, 
+                                                      m_inputSampleRate/maxFrequency, 
+                                                      m_inputSampleRate/minFrequency);
 
-        vector<pair<double, double> > tempPitchProb;
-        for (size_t iBuf = 0; iBuf < yinBufferSize; ++iBuf)
+    vector<pair<double, double> > tempPitchProb;
+    for (size_t iBuf = 0; iBuf < yinBufferSize; ++iBuf)
+    {
+        if (peakProbability[iBuf] > 0)
         {
-            if (peakProbability[iBuf] > 0)
-            {
-                double currentF0 = 
-                    m_inputSampleRate * (1.0 /
-                    YinUtil::parabolicInterpolation(yinBuffer, iBuf, yinBufferSize));
-                double tempPitch = 12 * std::log(currentF0/440)/std::log(2.) + 69;
-                tempPitchProb.push_back(pair<double, double>(tempPitch, peakProbability[iBuf]));
-            }
+            double currentF0 = 
+                m_inputSampleRate * (1.0 /
+                YinUtil::parabolicInterpolation(yinBuffer, iBuf, yinBufferSize));
+            double tempPitch = 12 * std::log(currentF0/440)/std::log(2.) + 69;
+            if (tempPitch != tempPitch) std::cerr << "AAAAAAAAA! " << currentF0 << " " << (m_inputSampleRate * 1.0 / iBuf) << std::endl;
+            tempPitchProb.push_back(pair<double, double>(tempPitch, peakProbability[iBuf]));
         }
-        m_pitchProb[iCandidate].push_back(tempPitchProb);
     }
+    m_pitchProb.push_back(tempPitchProb);
     m_timestamp.push_back(timestamp);
 
     return FeatureSet();
@@ -340,21 +340,46 @@ LocalCandidatePYIN::getRemainingFeatures()
     vector<float> freqNumber = vector<float>(m_nCandidate);
     vector<float> freqMean = vector<float>(m_nCandidate);
     
+    boost::math::normal normalDist(0, 8); // semitones sd
+    float maxNormalDist = boost::math::pdf(normalDist, 0);
+    
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate)
     {
         pitchTracks.push_back(vector<float>(nFrame));
-        vector<float> mpOut = mp.process(m_pitchProb[iCandidate]);
+        vector<vector<pair<double,double> > > tempPitchProb;
+        float centrePitch = 45 + 3 * iCandidate;
+        for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) {
+            tempPitchProb.push_back(vector<pair<double,double> >(0));
+            float sumProb = 0;
+            float pitch = 0;
+            float prob = 0;
+            for (size_t iProb = 0; iProb < m_pitchProb[iFrame].size(); ++iProb) {
+                pitch = m_pitchProb[iFrame][iProb].first;
+                // std::cerr << pitch << " " << m_pitchProb[iFrame][iProb].second << std::endl;
+                prob  = m_pitchProb[iFrame][iProb].second * boost::math::pdf(normalDist, pitch-centrePitch) / maxNormalDist;
+                // if (abs(pitch-centrePitch) > 5) prob *= 0.5;
+                // if (abs(pitch-centrePitch) > 7) prob *= 0.5;
+                // if (abs(pitch-centrePitch) > 9) prob *= 0.5;
+                sumProb += prob;
+                tempPitchProb[iFrame].push_back(pair<double,double>(pitch,prob));
+                // std::cerr << m_timestamp[iFrame] << " " << iCandidate << " " << centrePitch << " " << pitch << " " << prob << std::endl;
+            }
+            for (size_t iProb = 0; iProb < m_pitchProb[iFrame].size(); ++iProb) {
+                tempPitchProb[iFrame][iProb].second /= sumProb;
+            }
+        }
+        vector<float> mpOut = mp.process(tempPitchProb);
         float prevFreq = 0;
         for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
         {
             if (mpOut[iFrame] > 0) {
-                if (prevFreq>0 && fabs(log2(mpOut[iFrame]/prevFreq)) > 0.1) {
-                    for (int jFrame = iFrame; jFrame != -1; --jFrame) {
-                        // hack: setting all freqs to 0 -- will be eliminated later
-                        pitchTracks[iCandidate][jFrame] = 0;
-                    }
-                    break;
-                }
+                // if (prevFreq>0 && fabs(log2(mpOut[iFrame]/prevFreq)) > 0.1) {
+                //     for (int jFrame = iFrame; jFrame != -1; --jFrame) {
+                //         // hack: setting all freqs to 0 -- will be eliminated later
+                //         pitchTracks[iCandidate][jFrame] = 0;
+                //     }
+                //     break;
+                // }
                 pitchTracks[iCandidate][iFrame] = mpOut[iFrame];
                 freqSum[iCandidate] += mpOut[iFrame];
                 freqNumber[iCandidate]++;
@@ -371,22 +396,32 @@ LocalCandidatePYIN::getRemainingFeatures()
             size_t countEqual = 0;
             for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) 
             {
-                if (fabs(pitchTracks[iCandidate][iFrame]/pitchTracks[jCandidate][iFrame]-1)<0.01)
+                if ((pitchTracks[jCandidate][iFrame] == 0 && pitchTracks[iCandidate][iFrame] == 0) ||
+                fabs(pitchTracks[iCandidate][iFrame]/pitchTracks[jCandidate][iFrame]-1)<0.01)
                 countEqual++;
             }
+            // std::cerr << "proportion equal: " << (countEqual * 1.0 / nFrame) << std::endl;    
             if (countEqual * 1.0 / nFrame > 0.8) {
                 if (freqNumber[iCandidate] > freqNumber[jCandidate]) {
                     duplicates.push_back(jCandidate);
-                } else {
+                } else if (iCandidate < jCandidate) {
                     duplicates.push_back(iCandidate);
                 }
             }
         }
     }
 
+    // std::cerr << "n duplicate: " << duplicates.size() << std::endl;    
+    for (size_t iDup = 0; iDup < duplicates.size(); ++ iDup) {
+        // std::cerr << "duplicate: " << iDup << std::endl;
+    }
+
     // now find non-duplicate pitch tracks
     map<int, int> candidateActuals;
     map<int, std::string> candidateLabels;
+
+    vector<vector<float> > outputFrequencies;
+    for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) outputFrequencies.push_back(vector<float>(0));
 
     int actualCandidateNumber = 0;
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate) {
@@ -398,19 +433,20 @@ LocalCandidatePYIN::getRemainingFeatures()
                 break;
             }
         }
-        if (!isDuplicate && freqNumber[iCandidate] > 0.8*nFrame)
+        if (!isDuplicate && freqNumber[iCandidate] > 0.5*nFrame)
         {
             std::ostringstream convert;
             convert << actualCandidateNumber++;
             candidateLabels[iCandidate] = convert.str();
             candidateActuals[iCandidate] = actualCandidateNumber;
-            std::cerr << freqNumber[iCandidate] << " " << freqMean[iCandidate] << std::endl;
+            // std::cerr << iCandidate << " " << actualCandidateNumber << " " << freqNumber[iCandidate] << " " << freqMean[iCandidate] << std::endl;
             for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) 
             {
                 if (pitchTracks[iCandidate][iFrame] > 0)
                 {
-                    featureValues[m_timestamp[iFrame]][iCandidate] = 
-                        pitchTracks[iCandidate][iFrame];
+                    // featureValues[m_timestamp[iFrame]][iCandidate] = 
+                    //     pitchTracks[iCandidate][iFrame];
+                    outputFrequencies[iFrame].push_back(pitchTracks[iCandidate][iFrame]);
                 }
             }
         }
@@ -422,24 +458,34 @@ LocalCandidatePYIN::getRemainingFeatures()
 
     FeatureSet fs;
 
-    for (map<RealTime, map<int, float> >::const_iterator i =
-             featureValues.begin(); i != featureValues.end(); ++i) {
+    for (size_t iFrame = 0; iFrame < nFrame; ++iFrame){
         Feature f;
         f.hasTimestamp = true;
-        f.timestamp = i->first;
-        int nextCandidate = candidateActuals.begin()->second;
-        for (map<int, float>::const_iterator j = 
-                 i->second.begin(); j != i->second.end(); ++j) {
-            while (candidateActuals[j->first] > nextCandidate) {
-                f.values.push_back(0);
-                ++nextCandidate;
-            }
-            f.values.push_back(j->second);
-            nextCandidate = j->first + 1;
-        }
-        //!!! can't use labels?
+        f.timestamp = m_timestamp[iFrame];
+        f.values = outputFrequencies[iFrame];
         fs[0].push_back(f);
     }
+    
+    // I stopped using Chris's map stuff below because I couldn't get my head around it
+    //
+    // for (map<RealTime, map<int, float> >::const_iterator i =
+    //          featureValues.begin(); i != featureValues.end(); ++i) {
+    //     Feature f;
+    //     f.hasTimestamp = true;
+    //     f.timestamp = i->first;
+    //     int nextCandidate = candidateActuals.begin()->second;
+    //     for (map<int, float>::const_iterator j = 
+    //              i->second.begin(); j != i->second.end(); ++j) {
+    //         while (candidateActuals[j->first] > nextCandidate) {
+    //             f.values.push_back(0);
+    //             ++nextCandidate;
+    //         }
+    //         f.values.push_back(j->second);
+    //         nextCandidate = j->first + 1;
+    //     }
+    //     //!!! can't use labels?
+    //     fs[0].push_back(f);
+    // }
 
     return fs;
 }
