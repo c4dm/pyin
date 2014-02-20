@@ -276,12 +276,12 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t yinBu
                 minInd = tau;
             }
             currThreshInd = nThresholdInt-1;
-            while (thresholds[currThreshInd] > yinBuffer[tau] && currThreshInd > -1) {
-                // std::cerr << distribution[currThreshInd] << std::endl;
-                peakProb[tau] += distribution[currThreshInd];
-                currThreshInd--;
-            }
-            // peakProb[tau] = 1 - yinBuffer[tau];
+            // while (thresholds[currThreshInd] > yinBuffer[tau] && currThreshInd > -1) {
+            //     // std::cerr << distribution[currThreshInd] << std::endl;
+            //     peakProb[tau] += distribution[currThreshInd];
+            //     currThreshInd--;
+            // }
+            peakProb[tau] = 1 - yinBuffer[tau];
             sumProb += peakProb[tau];
             tau++;
         } else {
@@ -297,7 +297,7 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t yinBu
             nonPeakProb -= peakProb[i];
         }
     }
-    std::cerr << nonPeakProb << std::endl;
+    // std::cerr << nonPeakProb << std::endl;
     if (minInd > 0)
     {
         // std::cerr << "min set " << minVal << " " << minInd << " " << nonPeakProb << std::endl; 
