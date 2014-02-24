@@ -48,7 +48,7 @@ LocalCandidatePYIN::LocalCandidatePYIN(float inputSampleRate) :
     m_outputUnvoiced(0.0f),
     m_pitchProb(0),
     m_timestamp(0),
-    m_nCandidate(10)
+    m_nCandidate(13)
 {
 }
 
@@ -280,7 +280,9 @@ LocalCandidatePYIN::reset()
 LocalCandidatePYIN::FeatureSet
 LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp)
 {
-    timestamp = timestamp - Vamp::RealTime::frame2RealTime(m_blockSize, lrintf(m_inputSampleRate));
+    // I don't understand why I should have to make this very weird 11 
+    // step-size left-shift, but it does get it in sync with the normal pYIN
+    timestamp = timestamp - Vamp::RealTime::frame2RealTime(11 * m_stepSize, lrintf(m_inputSampleRate));
     
     double *dInputBuffers = new double[m_blockSize];
     for (size_t i = 0; i < m_blockSize; ++i) dInputBuffers[i] = inputBuffers[0][i];
@@ -356,10 +358,7 @@ LocalCandidatePYIN::getRemainingFeatures()
             for (size_t iProb = 0; iProb < m_pitchProb[iFrame].size(); ++iProb) {
                 pitch = m_pitchProb[iFrame][iProb].first;
                 // std::cerr << pitch << " " << m_pitchProb[iFrame][iProb].second << std::endl;
-                prob  = m_pitchProb[iFrame][iProb].second * boost::math::pdf(normalDist, pitch-centrePitch) / maxNormalDist;
-                // if (abs(pitch-centrePitch) > 5) prob *= 0.5;
-                // if (abs(pitch-centrePitch) > 7) prob *= 0.5;
-                // if (abs(pitch-centrePitch) > 9) prob *= 0.5;
+                prob  = m_pitchProb[iFrame][iProb].second * boost::math::pdf(normalDist, pitch-centrePitch) / maxNormalDist * 2;
                 sumProb += prob;
                 tempPitchProb[iFrame].push_back(pair<double,double>(pitch,prob));
                 // std::cerr << m_timestamp[iFrame] << " " << iCandidate << " " << centrePitch << " " << pitch << " " << prob << std::endl;
