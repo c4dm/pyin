@@ -144,3 +144,38 @@ Yin::setFrameSize(size_t parameter)
 //     m_removeUnvoiced = parameter;
 //     return 0;
 // }
+
+float
+Yin::constrainedMinPick(const double *in, const float minFreq, const int maxFreq) const {
+    
+    double* yinBuffer = new double[m_yinBufferSize];
+
+    // calculate aperiodicity function for all periods
+    YinUtil::fastDifference(in, yinBuffer, m_yinBufferSize);    
+    YinUtil::cumulativeDifference(yinBuffer, m_yinBufferSize);
+    
+    int minPeriod = m_inputSampleRate / maxFreq;
+    int maxPeriod = m_inputSampleRate / minFreq;
+    
+    if (minPeriod < 0 || maxPeriod > m_yinBufferSize || minPeriod > maxPeriod) {
+        delete [] yinBuffer;
+        return 0.f;
+    }
+    
+    float bestVal = 1000;
+    int   bestTau = 0;
+    for (int tau = minPeriod; tau <= maxPeriod; ++tau)
+    {
+        if (yinBuffer[tau] < bestVal) 
+        {
+            bestVal = yinBuffer[tau];
+            bestTau = tau;
+        }
+    }
+    
+    float interpolatedTau =
+        YinUtil::parabolicInterpolation(yinBuffer, bestTau, m_yinBufferSize);
+    
+    delete [] yinBuffer;
+    return m_inputSampleRate * (1.0 / interpolatedTau);
+}

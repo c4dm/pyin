@@ -17,10 +17,12 @@
 #include "PYinVamp.h"
 #include "YinVamp.h"
 #include "LocalCandidatePYIN.h"
+#include "YinVampFreqConstrained.h"
 
 static Vamp::PluginAdapter<PYinVamp> pyinvampPluginAdapter;
 static Vamp::PluginAdapter<YinVamp> yinvampPluginAdapter;
 static Vamp::PluginAdapter<LocalCandidatePYIN> localCandidatePYINPluginAdapter;
+static Vamp::PluginAdapter<YinVampFreqConstrained> yinVampFreqConstrainedPluginAdapter;
 
 const VampPluginDescriptor *
 vampGetPluginDescriptor(unsigned int version, unsigned int index)
@@ -31,6 +33,7 @@ vampGetPluginDescriptor(unsigned int version, unsigned int index)
     case  0: return pyinvampPluginAdapter.getDescriptor();
     case  1: return yinvampPluginAdapter.getDescriptor();
     case  2: return localCandidatePYINPluginAdapter.getDescriptor();
+    case  3: return yinVampFreqConstrainedPluginAdapter.getDescriptor();
     default: return 0;
     }
 }

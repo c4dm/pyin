@@ -12,6 +12,7 @@ PLUGIN := pyin$(PLUGIN_EXT)
 SOURCES := PYinVamp.cpp \
            YinVamp.cpp \
            LocalCandidatePYIN.cpp \
+           YinVampFreqConstrained.cpp \
            Yin.cpp \
            YinUtil.cpp \
            MonoNote.cpp \
@@ -66,6 +67,7 @@ depend:
 
 PYinVamp.o: PYinVamp.h
 YinVamp.o: YinVamp.h
+YinVampFreqConstrained.o: YinVampFreqConstrained.h
 LocalCandidatePYIN.o: LocalCandidatePYIN.h
 Yin.o: Yin.h
 MonoNoteParameters.o: MonoNoteParameters.h

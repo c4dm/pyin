@@ -56,6 +56,7 @@ public:
     // int setRemoveUnvoiced(bool frameSize);
     YinOutput process(const double *in) const;
     YinOutput processProbabilisticYin(const double *in) const;
+    float constrainedMinPick(const double *in, const float minFreq, const int maxFreq) const;
 
 private:
     mutable size_t m_frameSize;

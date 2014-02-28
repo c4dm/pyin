@@ -135,18 +135,6 @@ YinVamp::getParameterDescriptors() const
         
     list.push_back(d);
 
-    // d.identifier = "removeunvoiced";
-    // d.name = "Remove pitches classified as unvoiced.";
-    // d.description = "If ticked, then the pitch estimator will return the most likely pitch, even if it 'thinks' there isn't any.";
-    // d.unit = "";
-    // d.minValue = 0.0f;
-    // d.maxValue = 1.0f;
-    // d.defaultValue = 0.0f;
-    // d.isQuantized = true;
-    // d.quantizeStep = 1.0f;
-    // d.valueNames.clear();
-    // list.push_back(d);
-
     d.identifier = "outputunvoiced";
     d.valueNames.clear();
     d.name = "Output estimates classified as unvoiced?";
