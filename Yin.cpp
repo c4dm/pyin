@@ -33,7 +33,7 @@ Yin::Yin(size_t frameSize, size_t inputSampleRate, double thresh) :
     m_yinBufferSize(frameSize/2)
 {
     if (frameSize & (frameSize-1)) {
-        throw "N must be a power of two";
+      //  throw "N must be a power of two";
     }
 }
 
