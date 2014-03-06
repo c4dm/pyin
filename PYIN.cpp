@@ -361,7 +361,21 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
     for (size_t i = 0; i < m_blockSize; ++i) dInputBuffers[i] = inputBuffers[0][i];
     
     Yin::YinOutput yo = m_yin.processProbabilisticYin(dInputBuffers);
-    
+    delete [] dInputBuffers;
+
+    // First, get the things out of the way that we don't want to output 
+    // immediately, but instead save for later.
+    vector<pair<double, double> > tempPitchProb;
+    for (size_t iCandidate = 0; iCandidate < yo.freqProb.size(); ++iCandidate)
+    {
+        double tempPitch = 12 * std::log(yo.freqProb[iCandidate].first/440)/std::log(2.) + 69;
+        tempPitchProb.push_back(pair<double, double>
+            (tempPitch, yo.freqProb[iCandidate].second));
+    }
+    m_pitchProb.push_back(tempPitchProb);
+    m_timestamp.push_back(timestamp);
+
+    // F0 CANDIDATES
     Feature f;
     f.hasTimestamp = true;
     f.timestamp = timestamp;
@@ -371,6 +385,7 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
     }
     fs[m_oF0Candidates].push_back(f);
     
+    // VOICEDPROB
     f.values.clear();
     float voicedProb = 0;
     for (size_t i = 0; i < yo.freqProb.size(); ++i)
@@ -384,6 +399,7 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
     f.values.push_back(voicedProb);
     fs[m_oVoicedProb].push_back(f);
 
+    // SALIENCE -- maybe this should eventually disappear
     f.values.clear();
     float salienceSum = 0;
     for (size_t iBin = 0; iBin < yo.salience.size(); ++iBin)
@@ -392,19 +408,6 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
         salienceSum += yo.salience[iBin];
     }
     fs[m_oCandidateSalience].push_back(f);
-
-    delete [] dInputBuffers;
-
-    vector<pair<double, double> > tempPitchProb;
-    for (size_t iCandidate = 0; iCandidate < yo.freqProb.size(); ++iCandidate)
-    {
-        double tempPitch = 12 * std::log(yo.freqProb[iCandidate].first/440)/std::log(2.) + 69;
-        tempPitchProb.push_back(pair<double, double>
-            (tempPitch, yo.freqProb[iCandidate].second));
-    }
-    m_pitchProb.push_back(tempPitchProb);
-        
-    m_timestamp.push_back(timestamp);
 
     return fs;
 }
@@ -423,9 +426,7 @@ PYIN::getRemainingFeatures()
 
     // MONO-PITCH STUFF
     MonoPitch mp;
-//    std::cerr << "before viterbi" << std::endl;
     vector<float> mpOut = mp.process(m_pitchProb);
-    // std::cerr << "after viterbi " << mpOut.size() << " "<< m_timestamp.size() << std::endl;
     for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame)
     {
         if (mpOut[iFrame] < 0 && (m_outputUnvoiced==0)) continue;
@@ -433,7 +434,7 @@ PYIN::getRemainingFeatures()
         f.values.clear();
         if (m_outputUnvoiced == 1)
         {
-            f.values.push_back(abs(mpOut[iFrame]));
+            f.values.push_back(fabs(mpOut[iFrame]));
         } else {
             f.values.push_back(mpOut[iFrame]);
         }

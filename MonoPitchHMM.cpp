@@ -23,7 +23,7 @@ using std::pair;
 
 MonoPitchHMM::MonoPitchHMM() :
 m_minFreq(55),
-m_nBPS(10),
+m_nBPS(5),
 m_nPitch(0),
 m_transitionWidth(0),
 m_selfTrans(0.99),
@@ -32,15 +32,12 @@ m_freqs(0)
 {
     m_transitionWidth = 5*(m_nBPS/2) + 1;
     m_nPitch = 48 * m_nBPS;
-    m_freqs = vector<double>(2*m_nPitch+1);
+    m_freqs = vector<double>(2*m_nPitch);
     for (size_t iPitch = 0; iPitch < m_nPitch; ++iPitch)
     {
         m_freqs[iPitch] = m_minFreq * std::pow(2, iPitch * 1.0 / (12 * m_nBPS));
-        // m_freqs[iPitch+m_nPitch] = -2;
         m_freqs[iPitch+m_nPitch] = -m_freqs[iPitch];
-        // std::cerr << "pitch " << iPitch << " = " << m_freqs[iPitch] << std::endl;
     }
-    m_freqs[2*m_nPitch] = -1;
     build();
 }
 
@@ -84,8 +81,7 @@ void
 MonoPitchHMM::build()
 {
     // INITIAL VECTOR
-    init = vector<double>(2*m_nPitch+1);
-    init[2*m_nPitch] = 1; // force first frame to be unvoiced.
+    init = vector<double>(2*m_nPitch, 1.0 / 2*m_nPitch);
     
     // TRANSITIONS
     for (size_t iPitch = 0; iPitch < m_nPitch; ++iPitch)
@@ -139,9 +135,9 @@ MonoPitchHMM::build()
         // transProb.push_back(1-m_selfTrans);
         
         // TRANSITION FROM UNVOICED TO PITCH
-        from.push_back(2*m_nPitch);
-        to.push_back(iPitch+m_nPitch);
-        transProb.push_back(1.0/m_nPitch);
+        // from.push_back(2*m_nPitch);
+        // to.push_back(iPitch+m_nPitch);
+        // transProb.push_back(1.0/m_nPitch);
     }
     // UNVOICED SELFTRANSITION
     // from.push_back(2*m_nPitch);

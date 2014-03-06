@@ -338,13 +338,13 @@ VampYin::process(const float *const *inputBuffers, RealTime timestamp)
         }
     } else if (m_outputUnvoiced == 1.0f)
     {
-        if (abs(yo.f0) < m_fmax && abs(yo.f0) > m_fmin) {
-            f.values.push_back(abs(yo.f0));
+        if (fabs(yo.f0) < m_fmax && fabs(yo.f0) > m_fmin) {
+            f.values.push_back(fabs(yo.f0));
             fs[m_outNoF0].push_back(f);
         }
     } else
     {
-        if (abs(yo.f0) < m_fmax && abs(yo.f0) > m_fmin) {
+        if (fabs(yo.f0) < m_fmax && fabs(yo.f0) > m_fmin) {
             f.values.push_back(yo.f0);
             fs[m_outNoF0].push_back(f);
         }

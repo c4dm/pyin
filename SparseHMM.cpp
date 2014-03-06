@@ -104,7 +104,7 @@ SparseHMM::decodeViterbi(std::vector<vector<double> > obsProb,
             scale->push_back(1.0/deltasum);
         } else
         {
-            std::cerr << "WARNING: Viterbi has been fed some zero probabilities, at least they become zero in combination with the model." << std::endl;
+            std::cerr << "WARNING: Viterbi has been fed some zero probabilities, at least they become zero at frame " <<  iFrame << " in combination with the model." << std::endl;
             for (size_t iState = 0; iState < nState; ++iState)
             {
                 oldDelta[iState] = 1.0/nState;
@@ -132,10 +132,10 @@ SparseHMM::decodeViterbi(std::vector<vector<double> > obsProb,
         path[iFrame] = psi[iFrame+1][path[iFrame+1]];
     }
     
-    for (size_t iState = 0; iState < nState; ++iState)
-    {
-        // std::cerr << psi[2][iState] << std::endl;
-    }
+    // for (size_t iState = 0; iState < nState; ++iState)
+    // {
+    //     // std::cerr << psi[2][iState] << std::endl;
+    // }
     
     return path;
 }
