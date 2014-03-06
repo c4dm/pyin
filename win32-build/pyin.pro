@@ -11,26 +11,30 @@ TARGET = pyin
 SOURCES += \
     ../YinUtil.cpp \
     ../Yin.cpp \
-    ../VampYin.cpp \
     ../SparseHMM.cpp \
-    ../PYIN.cpp \
     ../MonoPitchHMM.cpp \
     ../MonoPitch.cpp \
     ../MonoNoteParameters.cpp \
     ../MonoNoteHMM.cpp \
     ../MonoNote.cpp \
-    ../libmain.cpp
+    ../libmain.cpp \
+    ../YinVampFreqConstrained.cpp \
+    ../YinVamp.cpp \
+    ../PYinVamp.cpp \
+    ../LocalCandidatePYIN.cpp
 
 HEADERS += \
     ../YinUtil.h \
     ../Yin.h \
-    ../VampYin.h \
     ../SparseHMM.h \
-    ../PYIN.h \
     ../MonoPitchHMM.h \
     ../MonoPitch.h \
     ../MonoNoteParameters.h \
     ../MonoNoteHMM.h \
     ../MonoNote.h \
-    ../MeanFilter.h
+    ../MeanFilter.h \
+    ../YinVampFreqConstrained.h \
+    ../YinVamp.h \
+    ../PYinVamp.h \
+    ../LocalCandidatePYIN.h
 
