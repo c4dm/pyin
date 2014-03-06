@@ -34,7 +34,7 @@ YinVamp::YinVamp(float inputSampleRate) :
     m_stepSize(256),
     m_blockSize(2048),
     m_fmin(40),
-    m_fmax(1000),
+    m_fmax(1600),
     m_yin(2048, inputSampleRate, 0.0),
     m_outNoF0(0),
     m_outNoPeriodicity(0),

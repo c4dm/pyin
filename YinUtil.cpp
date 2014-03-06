@@ -31,11 +31,6 @@ YinUtil::fastDifference(const double *in, double *yinBuffer, const size_t yinBuf
     
     size_t frameSize = 2 * yinBufferSize;
     
-    for (size_t j = 0; j < yinBufferSize; ++j)
-    {
-        yinBuffer[j] = 0.;
-    }
-
     double *audioTransformedReal = new double[frameSize];
     double *audioTransformedImag = new double[frameSize];
     double *nullImag = new double[frameSize];
@@ -48,7 +43,8 @@ YinUtil::fastDifference(const double *in, double *yinBuffer, const size_t yinBuf
     
     for (size_t j = 0; j < yinBufferSize; ++j)
     {
-        powerTerms[j] = 0.;
+        yinBuffer[j] = 0.; // set to zero
+        powerTerms[j] = 0.; // set to zero
     }
     
     for (size_t j = 0; j < frameSize; ++j)
@@ -82,7 +78,6 @@ YinUtil::fastDifference(const double *in, double *yinBuffer, const size_t yinBuf
     // 2. half of the data, disguised as a convolution kernel
     for (size_t j = 0; j < yinBufferSize; ++j) {
         kernel[j] = in[yinBufferSize-1-j];
-        kernel[j+yinBufferSize] = 0;
     }
     Vamp::FFT::forward(frameSize, kernel, nullImag, kernelTransformedReal, kernelTransformedImag);
 
@@ -289,6 +284,11 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t yinBu
         }
     }
     
+    if (peakProb[minInd] > 1) {
+        std::cerr << "WARNING: yin has prob > 1 ??? I'm returning all zeros instead." << std::endl;
+        return(std::vector<double>(yinBufferSize));
+    }
+    
     double nonPeakProb = 1;
     if (sumProb > 0) {
         for (size_t i = minTau; i < maxTau; ++i)
@@ -297,7 +297,6 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t yinBu
             nonPeakProb -= peakProb[i];
         }
     }
-    // std::cerr << nonPeakProb << std::endl;
     if (minInd > 0)
     {
         // std::cerr << "min set " << minVal << " " << minInd << " " << nonPeakProb << std::endl; 

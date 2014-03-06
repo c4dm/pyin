@@ -35,7 +35,7 @@ PYinVamp::PYinVamp(float inputSampleRate) :
     m_stepSize(256),
     m_blockSize(2048),
     m_fmin(40),
-    m_fmax(700),
+    m_fmax(1600),
     m_yin(2048, inputSampleRate, 0.0),
     m_oF0Candidates(0),
     m_oF0Probs(0),
@@ -366,7 +366,7 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
     }
     rms /= m_blockSize;
     rms = sqrt(rms);
-    float lowAmp = 0.01;
+    float lowAmp = 0.05;
     bool isLowAmplitude = (rms < lowAmp);
     
     Yin::YinOutput yo = m_yin.processProbabilisticYin(dInputBuffers);
@@ -383,7 +383,7 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
                 (tempPitch, yo.freqProb[iCandidate].second));
         else
             tempPitchProb.push_back(pair<double, double>
-                (tempPitch, yo.freqProb[iCandidate].second*((rms+lowAmp)/(2*lowAmp))));
+                (tempPitch, yo.freqProb[iCandidate].second*((rms+0.01*lowAmp)/(1.01*lowAmp))));
     }
     m_pitchProb.push_back(tempPitchProb);
     m_timestamp.push_back(timestamp);
@@ -455,6 +455,7 @@ PYinVamp::getRemainingFeatures()
     }
     
     // MONO-NOTE STUFF
+    std::cerr << "Mono Note Stuff" << std::endl;
     MonoNote mn;
     std::vector<std::vector<std::pair<double, double> > > smoothedPitch;
     for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame) {
