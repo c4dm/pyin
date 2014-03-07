@@ -22,6 +22,24 @@
 #include <boost/math/distributions.hpp>
 
 void 
+YinUtil::slowDifference(const double *in, double *yinBuffer, const size_t yinBufferSize) 
+{
+    yinBuffer[0] = 0;
+    double delta ;
+    int startPoint = 0;
+    int endPoint = 0;
+    for (int i = 1; i < yinBufferSize; ++i) {
+        yinBuffer[i] = 0;
+        startPoint = yinBufferSize/2 - i/2;
+        endPoint = startPoint + yinBufferSize;
+        for (int j = startPoint; j < endPoint; ++j) {
+            delta = in[i+j] - in[j];
+            yinBuffer[i] += delta * delta;
+        }
+    }    
+}
+
+void 
 YinUtil::fastDifference(const double *in, double *yinBuffer, const size_t yinBufferSize) 
 {
     

@@ -31,6 +31,7 @@ public:
     static double sumSquare(const double *in, const size_t startInd, const size_t endInd);
     static void difference(const double *in, double *yinBuffer, const size_t yinBufferSize);
     static void fastDifference(const double *in, double *yinBuffer, const size_t yinBufferSize);
+    static void slowDifference(const double *in, double *yinBuffer, const size_t yinBufferSize);
     static void cumulativeDifference(double *yinBuffer, const size_t yinBufferSize);
     static int absoluteThreshold(const double *yinBuffer, const size_t yinBufferSize, const double thresh);
     static vector<double> yinProb(const double *yinBuffer, const size_t prior, const size_t yinBufferSize, size_t minTau = 0, size_t maxTau = 0);

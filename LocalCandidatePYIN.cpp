@@ -265,10 +265,6 @@ LocalCandidatePYIN::reset()
     m_yin.setFrameSize(m_blockSize);
     
     m_pitchProb.clear();
-    for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate)
-    {
-        m_pitchProb.push_back(vector<pair<double, double> >());
-    }
     m_timestamp.clear();
 /*    
     std::cerr << "LocalCandidatePYIN::reset"
@@ -280,16 +276,14 @@ LocalCandidatePYIN::reset()
 LocalCandidatePYIN::FeatureSet
 LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp)
 {
-    // I don't understand why I should have to make this very weird 11 
-    // step-size left-shift, but it does get it in sync with the normal pYIN
-    timestamp = timestamp - Vamp::RealTime::frame2RealTime(11 * m_stepSize, lrintf(m_inputSampleRate));
+    timestamp = timestamp + Vamp::RealTime::frame2RealTime(m_blockSize/2, lrintf(m_inputSampleRate));
     
     double *dInputBuffers = new double[m_blockSize];
     for (size_t i = 0; i < m_blockSize; ++i) dInputBuffers[i] = inputBuffers[0][i];
     
     size_t yinBufferSize = m_blockSize/2;
     double* yinBuffer = new double[yinBufferSize];
-    YinUtil::fastDifference(dInputBuffers, yinBuffer, yinBufferSize);    
+    YinUtil::slowDifference(dInputBuffers, yinBuffer, yinBufferSize);    
     
     delete [] dInputBuffers;
 
@@ -351,7 +345,7 @@ LocalCandidatePYIN::getRemainingFeatures()
         vector<vector<pair<double,double> > > tempPitchProb;
         float centrePitch = 45 + 3 * iCandidate;
         for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) {
-            tempPitchProb.push_back(vector<pair<double,double> >(0));
+            tempPitchProb.push_back(vector<pair<double,double> >());
             float sumProb = 0;
             float pitch = 0;
             float prob = 0;
@@ -410,17 +404,12 @@ LocalCandidatePYIN::getRemainingFeatures()
         }
     }
 
-    // std::cerr << "n duplicate: " << duplicates.size() << std::endl;    
-    for (size_t iDup = 0; iDup < duplicates.size(); ++ iDup) {
-        // std::cerr << "duplicate: " << iDup << std::endl;
-    }
-
     // now find non-duplicate pitch tracks
     map<int, int> candidateActuals;
     map<int, std::string> candidateLabels;
 
     vector<vector<float> > outputFrequencies;
-    for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) outputFrequencies.push_back(vector<float>(0));
+    for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) outputFrequencies.push_back(vector<float>());
 
     int actualCandidateNumber = 0;
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate) {
@@ -446,6 +435,8 @@ LocalCandidatePYIN::getRemainingFeatures()
                     // featureValues[m_timestamp[iFrame]][iCandidate] = 
                     //     pitchTracks[iCandidate][iFrame];
                     outputFrequencies[iFrame].push_back(pitchTracks[iCandidate][iFrame]);
+                } else {
+                    outputFrequencies[iFrame].push_back(0);
                 }
             }
         }

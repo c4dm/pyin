@@ -47,7 +47,7 @@ Yin::process(const double *in) const {
     double* yinBuffer = new double[m_yinBufferSize];
 
     // calculate aperiodicity function for all periods
-    YinUtil::fastDifference(in, yinBuffer, m_yinBufferSize);    
+    YinUtil::slowDifference(in, yinBuffer, m_yinBufferSize);    
     YinUtil::cumulativeDifference(yinBuffer, m_yinBufferSize);
 
     int tau = 0;
@@ -86,7 +86,7 @@ Yin::processProbabilisticYin(const double *in) const {
     double* yinBuffer = new double[m_yinBufferSize];
 
     // calculate aperiodicity function for all periods
-    YinUtil::fastDifference(in, yinBuffer, m_yinBufferSize);    
+    YinUtil::slowDifference(in, yinBuffer, m_yinBufferSize);    
     YinUtil::cumulativeDifference(yinBuffer, m_yinBufferSize);
 
     vector<double> peakProbability = YinUtil::yinProb(yinBuffer, m_threshDistr, m_yinBufferSize);
@@ -151,7 +151,7 @@ Yin::constrainedMinPick(const double *in, const float minFreq, const int maxFreq
     double* yinBuffer = new double[m_yinBufferSize];
 
     // calculate aperiodicity function for all periods
-    YinUtil::fastDifference(in, yinBuffer, m_yinBufferSize);    
+    YinUtil::slowDifference(in, yinBuffer, m_yinBufferSize);    
     YinUtil::cumulativeDifference(yinBuffer, m_yinBufferSize);
     
     int minPeriod = m_inputSampleRate / maxFreq;

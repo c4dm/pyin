@@ -306,7 +306,7 @@ YinVamp::reset()
 YinVamp::FeatureSet
 YinVamp::process(const float *const *inputBuffers, RealTime timestamp)
 {
-    timestamp = timestamp + Vamp::RealTime::frame2RealTime(m_blockSize/4, lrintf(m_inputSampleRate));
+    timestamp = timestamp + Vamp::RealTime::frame2RealTime(m_blockSize/2, lrintf(m_inputSampleRate));
     FeatureSet fs;
     
     double *dInputBuffers = new double[m_blockSize];
