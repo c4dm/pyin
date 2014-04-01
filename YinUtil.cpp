@@ -273,7 +273,7 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t yinBu
     // 
     // std::cerr << tau << " " << currThreshInd << " "<< thresholds[currThreshInd] << " " << distribution[currThreshInd] << std::endl;
     float sumProb = 0;
-    while (tau < maxTau)
+    while (tau+1 < maxTau)
     {
         if (yinBuffer[tau] < thresholds[thresholds.size()-1] && yinBuffer[tau+1] < yinBuffer[tau])
         {
