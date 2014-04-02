@@ -14,9 +14,9 @@
 #include "MonoNoteParameters.h"
 
 MonoNoteParameters::MonoNoteParameters() :
-    minPitch(39), 
+    minPitch(35), 
     nPPS(3), 
-    nS(64), 
+    nS(68), 
     nSPP(4), // states per pitch
     n(0),
     initPi(0), 
