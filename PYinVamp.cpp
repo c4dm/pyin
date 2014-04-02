@@ -459,7 +459,7 @@ PYinVamp::getRemainingFeatures()
     }
     
     // MONO-NOTE STUFF
-    std::cerr << "Mono Note Stuff" << std::endl;
+//    std::cerr << "Mono Note Stuff" << std::endl;
     MonoNote mn;
     std::vector<std::vector<std::pair<double, double> > > smoothedPitch;
     for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame) {

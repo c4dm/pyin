@@ -57,7 +57,7 @@ Yin::process(const double *in) const {
     double aperiodicity;
     double f0;
     
-    if (tau!=0 && tau!=m_yinBufferSize-1)
+    if (tau!=0 && tau!=int(m_yinBufferSize)-1)
     {
         interpolatedTau = YinUtil::parabolicInterpolation(yinBuffer, abs(tau), m_yinBufferSize);
         f0 = m_inputSampleRate * (1.0 / interpolatedTau);
@@ -93,7 +93,7 @@ Yin::processProbabilisticYin(const double *in) const {
         
     // basic yin output
     Yin::YinOutput yo(0,0,0);
-    for (size_t iBuf = 1; iBuf < m_yinBufferSize-1; ++iBuf)
+    for (int iBuf = 1; iBuf < int(m_yinBufferSize)-1; ++iBuf)
     {
         if (peakProbability[iBuf] > 0)
         {
@@ -157,7 +157,7 @@ Yin::constrainedMinPick(const double *in, const float minFreq, const int maxFreq
     int minPeriod = m_inputSampleRate / maxFreq;
     int maxPeriod = m_inputSampleRate / minFreq;
     
-    if (minPeriod < 0 || maxPeriod > m_yinBufferSize || minPeriod > maxPeriod) {
+    if (minPeriod < 0 || maxPeriod > int(m_yinBufferSize) || minPeriod > maxPeriod) {
         delete [] yinBuffer;
         return 0.f;
     }
