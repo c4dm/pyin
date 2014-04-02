@@ -370,7 +370,6 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
     bool isLowAmplitude = (rms < lowAmp);
     float factor = ((rms+0.01*lowAmp)/(1.01*lowAmp));
     // std::cerr << rms << " " << factor << std::endl;
-    factor *= factor;
     
     Yin::YinOutput yo = m_yin.processProbabilisticYin(dInputBuffers);
     delete [] dInputBuffers;
@@ -459,7 +458,7 @@ PYinVamp::getRemainingFeatures()
     }
     
     // MONO-NOTE STUFF
-//    std::cerr << "Mono Note Stuff" << std::endl;
+    std::cerr << "Mono Note Stuff" << std::endl;
     MonoNote mn;
     std::vector<std::vector<std::pair<double, double> > > smoothedPitch;
     for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame) {
