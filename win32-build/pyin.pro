@@ -1,6 +1,6 @@
 TEMPLATE = lib
 
-INCLUDEPATH += ../../sv-dependency-builds/win32-mingw/include ../../../boost_1_54_0
+INCLUDEPATH += ../../sv-dependency-builds/win32-mingw/include ../../../boost_1_55_0
 LIBS += ../../sv-dependency-builds/win32-mingw/lib/libvamp-sdk.a -Wl,--version-script=../win32-build/vamp-plugin.map
 
 CONFIG -= qt
