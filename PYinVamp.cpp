@@ -46,6 +46,7 @@ PYinVamp::PYinVamp(float inputSampleRate) :
     m_threshDistr(2.0f),
     m_outputUnvoiced(0.0f),
     m_preciseTime(0.0f),
+    m_lowAmp(0.2),
     m_pitchProb(0),
     m_timestamp(0)
 {
@@ -176,6 +177,16 @@ PYinVamp::getParameterDescriptors() const
     d.quantizeStep = 1.0f;
     list.push_back(d);
 
+    d.identifier = "lowampsuppression";
+    d.valueNames.clear();
+    d.name = "Suppress low amplitude pitch estimates.";
+    d.description = ".";
+    d.unit = "";
+    d.minValue = 0.0f;
+    d.maxValue = 1.0f;
+    d.defaultValue = 0.2f;
+    d.isQuantized = false;
+    list.push_back(d);
 
     return list;
 }
@@ -191,6 +202,9 @@ PYinVamp::getParameter(string identifier) const
     }
     if (identifier == "precisetime") {
             return m_preciseTime;
+    }
+    if (identifier == "lowampsuppression") {
+            return m_lowAmp;
     }
     return 0.f;
 }
@@ -209,6 +223,10 @@ PYinVamp::setParameter(string identifier, float value)
     if (identifier == "precisetime")
     {
         m_preciseTime = value;
+    }
+    if (identifier == "lowampsuppression")
+    {
+        m_lowAmp = value;
     }
 }
 
@@ -387,9 +405,9 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
     }
     rms /= m_blockSize;
     rms = sqrt(rms);
-    float lowAmp = 0.1;
-    bool isLowAmplitude = (rms < lowAmp);
-    float factor = ((rms+0.01*lowAmp)/(1.01*lowAmp));
+    // float m_lowAmp = 0.5;
+    bool isLowAmplitude = (rms < m_lowAmp);
+    float factor = ((rms+0.01*m_lowAmp)/(1.01*m_lowAmp));
     // std::cerr << rms << " " << factor << std::endl;
     
     Yin::YinOutput yo = m_yin.processProbabilisticYin(dInputBuffers);
