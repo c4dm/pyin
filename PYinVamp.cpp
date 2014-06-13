@@ -45,6 +45,7 @@ PYinVamp::PYinVamp(float inputSampleRate) :
     m_oNotes(0),
     m_threshDistr(2.0f),
     m_outputUnvoiced(0.0f),
+    m_preciseTime(0.0f),
     m_pitchProb(0),
     m_timestamp(0)
 {
@@ -163,6 +164,19 @@ PYinVamp::getParameterDescriptors() const
     d.valueNames.push_back("Yes, as negative frequencies");
     list.push_back(d);
 
+    d.identifier = "precisetime";
+    d.valueNames.clear();
+    d.name = "Use non-standard precise YIN timing (slow).";
+    d.description = ".";
+    d.unit = "";
+    d.minValue = 0.0f;
+    d.maxValue = 1.0f;
+    d.defaultValue = 0.0f;
+    d.isQuantized = true;
+    d.quantizeStep = 1.0f;
+    list.push_back(d);
+
+
     return list;
 }
 
@@ -174,6 +188,9 @@ PYinVamp::getParameter(string identifier) const
     }
     if (identifier == "outputunvoiced") {
             return m_outputUnvoiced;
+    }
+    if (identifier == "precisetime") {
+            return m_preciseTime;
     }
     return 0.f;
 }
@@ -189,7 +206,10 @@ PYinVamp::setParameter(string identifier, float value)
     {
         m_outputUnvoiced = value;
     }
-    
+    if (identifier == "precisetime")
+    {
+        m_preciseTime = value;
+    }
 }
 
 PYinVamp::ProgramList
@@ -341,6 +361,7 @@ PYinVamp::reset()
 {    
     m_yin.setThresholdDistr(m_threshDistr);
     m_yin.setFrameSize(m_blockSize);
+    m_yin.setFast(!m_preciseTime);
     
     m_pitchProb.clear();
     m_timestamp.clear();

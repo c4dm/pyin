@@ -42,10 +42,10 @@ LocalCandidatePYIN::LocalCandidatePYIN(float inputSampleRate) :
     m_blockSize(2048),
     m_fmin(40),
     m_fmax(700),
-    m_yin(2048, inputSampleRate, 0.0),
     m_oPitchTrackCandidates(0),
     m_threshDistr(2.0f),
     m_outputUnvoiced(0.0f),
+    m_preciseTime(0.0f),
     m_pitchProb(0),
     m_timestamp(0),
     m_nCandidate(13)
@@ -165,6 +165,18 @@ LocalCandidatePYIN::getParameterDescriptors() const
     d.valueNames.push_back("Yes, as negative frequencies");
     list.push_back(d);
 
+    d.identifier = "precisetime";
+    d.valueNames.clear();
+    d.name = "Use non-standard precise YIN timing (slow).";
+    d.description = ".";
+    d.unit = "";
+    d.minValue = 0.0f;
+    d.maxValue = 1.0f;
+    d.defaultValue = 0.0f;
+    d.isQuantized = true;
+    d.quantizeStep = 1.0f;
+    list.push_back(d);
+
     return list;
 }
 
@@ -176,6 +188,9 @@ LocalCandidatePYIN::getParameter(string identifier) const
     }
     if (identifier == "outputunvoiced") {
             return m_outputUnvoiced;
+    }
+    if (identifier == "precisetime") {
+            return m_preciseTime;
     }
     return 0.f;
 }
@@ -191,7 +206,10 @@ LocalCandidatePYIN::setParameter(string identifier, float value)
     {
         m_outputUnvoiced = value;
     }
-    
+    if (identifier == "precisetime")
+    {
+        m_preciseTime = value;
+    }
 }
 
 LocalCandidatePYIN::ProgramList
@@ -261,9 +279,6 @@ LocalCandidatePYIN::initialise(size_t channels, size_t stepSize, size_t blockSiz
 void
 LocalCandidatePYIN::reset()
 {    
-    m_yin.setThresholdDistr(m_threshDistr);
-    m_yin.setFrameSize(m_blockSize);
-    
     m_pitchProb.clear();
     m_timestamp.clear();
 /*    
@@ -283,7 +298,8 @@ LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp
     
     size_t yinBufferSize = m_blockSize/2;
     double* yinBuffer = new double[yinBufferSize];
-    YinUtil::slowDifference(dInputBuffers, yinBuffer, yinBufferSize);    
+    if (!m_preciseTime) YinUtil::fastDifference(dInputBuffers, yinBuffer, yinBufferSize);
+    else YinUtil::slowDifference(dInputBuffers, yinBuffer, yinBufferSize);    
     
     delete [] dInputBuffers;
 

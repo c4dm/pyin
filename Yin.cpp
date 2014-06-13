@@ -25,12 +25,13 @@
 
 using std::vector;
 
-Yin::Yin(size_t frameSize, size_t inputSampleRate, double thresh) : 
+Yin::Yin(size_t frameSize, size_t inputSampleRate, double thresh, bool fast) : 
     m_frameSize(frameSize),
     m_inputSampleRate(inputSampleRate),
     m_thresh(thresh),
     m_threshDistr(2),
-    m_yinBufferSize(frameSize/2)
+    m_yinBufferSize(frameSize/2),
+    m_fast(fast)
 {
     if (frameSize & (frameSize-1)) {
       //  throw "N must be a power of two";
@@ -45,9 +46,9 @@ Yin::YinOutput
 Yin::process(const double *in) const {
     
     double* yinBuffer = new double[m_yinBufferSize];
-
     // calculate aperiodicity function for all periods
-    YinUtil::slowDifference(in, yinBuffer, m_yinBufferSize);    
+    if (m_fast) YinUtil::fastDifference(in, yinBuffer, m_yinBufferSize);
+    else YinUtil::slowDifference(in, yinBuffer, m_yinBufferSize);    
     YinUtil::cumulativeDifference(yinBuffer, m_yinBufferSize);
 
     int tau = 0;
@@ -86,7 +87,9 @@ Yin::processProbabilisticYin(const double *in) const {
     double* yinBuffer = new double[m_yinBufferSize];
 
     // calculate aperiodicity function for all periods
-    YinUtil::slowDifference(in, yinBuffer, m_yinBufferSize);    
+    if (m_fast) YinUtil::fastDifference(in, yinBuffer, m_yinBufferSize);
+    else YinUtil::slowDifference(in, yinBuffer, m_yinBufferSize);    
+
     YinUtil::cumulativeDifference(yinBuffer, m_yinBufferSize);
 
     vector<double> peakProbability = YinUtil::yinProb(yinBuffer, m_threshDistr, m_yinBufferSize);
@@ -135,6 +138,13 @@ Yin::setFrameSize(size_t parameter)
 {
     m_frameSize = parameter;
     m_yinBufferSize = m_frameSize/2;
+    return 0;
+}
+
+int
+Yin::setFast(bool fast)
+{
+    m_fast = fast;
     return 0;
 }
 

@@ -72,6 +72,7 @@ protected:
 
     float m_threshDistr;
     float m_outputUnvoiced;
+    float m_preciseTime;
     vector<vector<pair<double, double> > > m_pitchProb;
     vector<Vamp::RealTime> m_timestamp;
 };

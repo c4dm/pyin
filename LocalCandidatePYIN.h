@@ -61,12 +61,12 @@ protected:
     size_t m_blockSize;
     float m_fmin;
     float m_fmax;
-    Yin m_yin;
     
     mutable int m_oPitchTrackCandidates;
     
     float m_threshDistr;
     float m_outputUnvoiced;
+    float m_preciseTime;
     vector<vector<pair<double, double> > > m_pitchProb;
     vector<Vamp::RealTime> m_timestamp;
     size_t m_nCandidate;
