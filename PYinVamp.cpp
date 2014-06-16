@@ -46,7 +46,7 @@ PYinVamp::PYinVamp(float inputSampleRate) :
     m_threshDistr(2.0f),
     m_outputUnvoiced(0.0f),
     m_preciseTime(0.0f),
-    m_lowAmp(0.2),
+    m_lowAmp(0.1),
     m_pitchProb(0),
     m_timestamp(0)
 {
@@ -184,7 +184,7 @@ PYinVamp::getParameterDescriptors() const
     d.unit = "";
     d.minValue = 0.0f;
     d.maxValue = 1.0f;
-    d.defaultValue = 0.2f;
+    d.defaultValue = 0.1f;
     d.isQuantized = false;
     list.push_back(d);
 
