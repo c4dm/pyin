@@ -329,6 +329,8 @@ LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp
     m_pitchProb.push_back(tempPitchProb);
     m_timestamp.push_back(timestamp);
 
+    delete[] yinBuffer;
+
     return FeatureSet();
 }
 
