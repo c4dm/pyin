@@ -291,7 +291,8 @@ LocalCandidatePYIN::reset()
 LocalCandidatePYIN::FeatureSet
 LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp)
 {
-    timestamp = timestamp + Vamp::RealTime::frame2RealTime(m_blockSize/2, lrintf(m_inputSampleRate));
+    int offset = m_preciseTime == 1.0 ? m_blockSize/2 : m_blockSize/4;
+    timestamp = timestamp + Vamp::RealTime::frame2RealTime(offset, lrintf(m_inputSampleRate));
     
     double *dInputBuffers = new double[m_blockSize];
     for (size_t i = 0; i < m_blockSize; ++i) dInputBuffers[i] = inputBuffers[0][i];
