@@ -68,7 +68,9 @@ MonoNoteHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
                         minDistCandidate = iCandidate;
                     }
                 }
-                tempProb = std::pow(minDistProb, par.yinTrust) * boost::math::pdf(pitchDistr[i], pitchProb[minDistCandidate].first);
+                tempProb = std::pow(minDistProb, par.yinTrust) * 
+                           boost::math::pdf(pitchDistr[i], 
+                                            pitchProb[minDistCandidate].first);
             } else {
                 tempProb = 1;
             }
@@ -177,15 +179,20 @@ MonoNoteHMM::build()
         {
             int fromPitch = iPitch;
             int toPitch = jPitch;
-            double semitoneDistance = std::abs(fromPitch - toPitch) * 1.0 / par.nPPS;
+            double semitoneDistance = 
+                std::abs(fromPitch - toPitch) * 1.0 / par.nPPS;
             
             // if (std::fmod(semitoneDistance, 1) == 0 && semitoneDistance > par.minSemitoneDistance)
-            if (semitoneDistance == 0 || (semitoneDistance > par.minSemitoneDistance && semitoneDistance < par.maxJump))
+            if (semitoneDistance == 0 || 
+                (semitoneDistance > par.minSemitoneDistance 
+                 && semitoneDistance < par.maxJump))
             {
                 size_t toIndex = jPitch * par.nSPP; // note attack index
 
-                double tempWeightSilent = boost::math::pdf(noteDistanceDistr, semitoneDistance);
-                double tempWeightInter = semitoneDistance == 0 ? 0 : tempWeightSilent;
+                double tempWeightSilent = boost::math::pdf(noteDistanceDistr, 
+                                                           semitoneDistance);
+                double tempWeightInter = semitoneDistance == 0 ? 
+                                         0 : tempWeightSilent;
                 probSumSilent += tempWeightSilent;
                 probSumInter += tempWeightInter;
 

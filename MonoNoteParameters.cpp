@@ -14,19 +14,19 @@
 #include "MonoNoteParameters.h"
 
 MonoNoteParameters::MonoNoteParameters() :
-    minPitch(36), 
+    minPitch(35), 
     nPPS(3), 
-    nS(43), 
+    nS(50), 
     nSPP(4), // states per pitch
     n(0),
     initPi(0), 
-    pAttackSelftrans(0.5),
-    pStableSelftrans(0.999),
-    pStable2Silent(0.005),
-    pSilentSelftrans(0.5), 
+    pAttackSelftrans(0.9),
+    pStableSelftrans(0.99),
+    pStable2Silent(0.01),
+    pSilentSelftrans(0.99999), 
     sigma2Note(0.7),
     maxJump(13),
-    pInterSelftrans(0.99),
+    pInterSelftrans(0.9),
     priorPitchedProb(.7),
     priorWeight(0.5),
     minSemitoneDistance(.5),
