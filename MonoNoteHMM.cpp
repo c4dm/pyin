@@ -127,7 +127,6 @@ MonoNoteHMM::build()
         pitchDistr[index] = boost::math::normal(mu, par.sigmaYinPitchAttack);
         pitchDistr[index+1] = boost::math::normal(mu, par.sigmaYinPitchStable);
         pitchDistr[index+2] = boost::math::normal(mu, 1.0); // dummy
-        pitchDistr[index+3] = boost::math::normal(mu, par.sigmaYinPitchInter);
     }
     
     boost::math::normal noteDistanceDistr(0, par.sigma2Note);
@@ -155,24 +154,15 @@ MonoNoteHMM::build()
         to.push_back(index+2); // to silent
         transProb.push_back(par.pStable2Silent);
 
-        // from.push_back(index+1);
-        // to.push_back(index+3); // to inter-note
-        // transProb.push_back(1-par.pStableSelftrans-par.pStable2Silent);
-
         // the "easy" transitions from silent state
         from.push_back(index+2);
         to.push_back(index+2);
         transProb.push_back(par.pSilentSelftrans);
         
-        // // the "easy" inter state transition
-        // from.push_back(index+3);
-        // to.push_back(index+3);
-        // transProb.push_back(par.pInterSelftrans);
         
-        // the more complicated transitions from the silent and inter state
+        // the more complicated transitions from the silent
         double probSumSilent = 0;
-        // double probSumInter = 0;
-        // vector<double> tempTransProbInter;
+
         vector<double> tempTransProbSilent;
         for (size_t jPitch = 0; jPitch < (par.nS * par.nPPS); ++jPitch)
         {
@@ -190,24 +180,17 @@ MonoNoteHMM::build()
 
                 double tempWeightSilent = boost::math::pdf(noteDistanceDistr, 
                                                            semitoneDistance);
-                // double tempWeightInter = semitoneDistance == 0 ? 
-                //                          0 : tempWeightSilent;
                 probSumSilent += tempWeightSilent;
-                // probSumInter += tempWeightInter;
 
                 tempTransProbSilent.push_back(tempWeightSilent);
-                // tempTransProbInter.push_back(tempWeightInter);
 
                 from.push_back(index+2);
                 to.push_back(toIndex);
-                // from.push_back(index+3);
-                // to.push_back(toIndex);                
             }
         }
         for (size_t i = 0; i < tempTransProbSilent.size(); ++i)
         {
             transProb.push_back((1-par.pSilentSelftrans) * tempTransProbSilent[i]/probSumSilent);
-            // transProb.push_back((1-par.pInterSelftrans) * tempTransProbInter[i]/probSumInter);
         }
     }
 }

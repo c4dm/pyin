@@ -476,8 +476,8 @@ PYIN::getRemainingFeatures()
     {
         isVoiced = mnOut[iFrame].noteState < 3
                    && smoothedPitch[iFrame].size() > 0
-                   && (iFrame == nFrame-1 
-                       || ((m_level[iFrame+1]/m_level[iFrame]) < 1.25));
+                   && (iFrame >= nFrame-2
+                       || ((m_level[iFrame]/m_level[iFrame+2]) > 0.8));
         // std::cerr << m_level[iFrame]/m_level[iFrame-1] << std::endl;
         if (isVoiced && iFrame != nFrame-1)
         {
