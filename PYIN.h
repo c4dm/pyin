@@ -74,6 +74,7 @@ protected:
     float m_outputUnvoiced;
     vector<vector<pair<double, double> > > m_pitchProb;
     vector<Vamp::RealTime> m_timestamp;
+    vector<float> m_level;
 };
 
 #endif

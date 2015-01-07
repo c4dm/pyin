@@ -49,7 +49,7 @@ MonoNoteHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
     double tempProbSum = 0;
     for (size_t i = 0; i < par.n; ++i)
     {
-        if (i % 4 != 2)
+        if (i % par.nSPP != 2)
         {
             // std::cerr << getMidiPitch(i) << std::endl;
             double tempProb = 0;
@@ -81,7 +81,7 @@ MonoNoteHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
     
     for (size_t i = 0; i < par.n; ++i)
     {
-        if (i % 4 != 2)
+        if (i % par.nSPP != 2)
         {
             if (tempProbSum > 0) 
             {
@@ -103,16 +103,15 @@ MonoNoteHMM::build()
     //    0. attack state
     //    1. stable state
     //    2. silent state
-    //    3. inter state
-    // 4-6. second-lowest pitch
-    //    4. attack state
+    // 3-5. second-lowest pitch
+    //    3. attack state
     //    ...
     
     // observation distributions
     for (size_t iState = 0; iState < par.n; ++iState)
     {
         pitchDistr.push_back(boost::math::normal(0,1));
-        if (iState % 4 == 2)
+        if (iState % par.nSPP == 2)
         {
             // silent state starts tracking
             init.push_back(1.0/(par.nS * par.nPPS));
@@ -156,9 +155,9 @@ MonoNoteHMM::build()
         to.push_back(index+2); // to silent
         transProb.push_back(par.pStable2Silent);
 
-        from.push_back(index+1);
-        to.push_back(index+3); // to inter-note
-        transProb.push_back(1-par.pStableSelftrans-par.pStable2Silent);
+        // from.push_back(index+1);
+        // to.push_back(index+3); // to inter-note
+        // transProb.push_back(1-par.pStableSelftrans-par.pStable2Silent);
 
         // the "easy" transitions from silent state
         from.push_back(index+2);

@@ -97,8 +97,8 @@ Yin::processProbabilisticYin(const double *in) const {
     {
         probSum += peakProbability[iBin];
     }
-        
-    Yin::YinOutput yo(0,0,0);
+    double rms = std::sqrt(YinUtil::sumSquare(in, 0, m_yinBufferSize)/m_yinBufferSize);
+    Yin::YinOutput yo(0,0,rms);
     for (size_t iBuf = 0; iBuf < m_yinBufferSize; ++iBuf)
     {
         yo.salience.push_back(peakProbability[iBuf]);

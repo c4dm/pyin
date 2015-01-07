@@ -46,7 +46,8 @@ PYIN::PYIN(float inputSampleRate) :
     m_threshDistr(2.0f),
     m_outputUnvoiced(0.0f),
     m_pitchProb(0),
-    m_timestamp(0)
+    m_timestamp(0),
+    m_level(0)
 {
 }
 
@@ -344,6 +345,7 @@ PYIN::reset()
     
     m_pitchProb.clear();
     m_timestamp.clear();
+    m_level.clear();
 /*    
     std::cerr << "PYIN::reset"
           << ", blockSize = " << m_blockSize
@@ -362,6 +364,8 @@ PYIN::process(const float *const *inputBuffers, RealTime timestamp)
     
     Yin::YinOutput yo = m_yin.processProbabilisticYin(dInputBuffers);
     delete [] dInputBuffers;
+
+    m_level.push_back(yo.rms);
 
     // First, get the things out of the way that we don't want to output 
     // immediately, but instead save for later.
@@ -470,7 +474,11 @@ PYIN::getRemainingFeatures()
     std::vector<float> notePitchTrack; // collects pitches for one note at a time
     for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
     {
-        isVoiced = mnOut[iFrame].noteState < 3 && smoothedPitch[iFrame].size() > 0;
+        isVoiced = mnOut[iFrame].noteState < 3
+                   && smoothedPitch[iFrame].size() > 0
+                   && (iFrame == nFrame-1 
+                       || ((m_level[iFrame+1]/m_level[iFrame]) < 1.25));
+        // std::cerr << m_level[iFrame]/m_level[iFrame-1] << std::endl;
         if (isVoiced && iFrame != nFrame-1)
         {
             if (oldIsVoiced == 0) // beginning of a note
@@ -481,7 +489,7 @@ PYIN::getRemainingFeatures()
             float pitch = smoothedPitch[iFrame][0].first;
             notePitchTrack.push_back(pitch); // add to the note's pitch track
         } else { // not currently voiced
-            if (oldIsVoiced == 1 && notePitchTrack.size() > 17) // end of note
+            if (oldIsVoiced == 1 && notePitchTrack.size() > 14) // end of note
             {
                 std::sort(notePitchTrack.begin(), notePitchTrack.end());
                 float medianPitch = notePitchTrack[notePitchTrack.size()/2];
