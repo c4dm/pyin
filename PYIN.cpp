@@ -470,8 +470,6 @@ PYIN::getRemainingFeatures()
     std::vector<float> notePitchTrack; // collects pitches for one note at a time
     for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
     {
-        if (mnOut[iFrame].noteState>3)
-            std::cerr << mnOut[iFrame].noteState << std::endl;
         isVoiced = mnOut[iFrame].noteState < 3 && smoothedPitch[iFrame].size() > 0;
         if (isVoiced && iFrame != nFrame-1)
         {
@@ -483,7 +481,7 @@ PYIN::getRemainingFeatures()
             float pitch = smoothedPitch[iFrame][0].first;
             notePitchTrack.push_back(pitch); // add to the note's pitch track
         } else { // not currently voiced
-            if (oldIsVoiced == 1 && notePitchTrack.size() > 17) // end of the note
+            if (oldIsVoiced == 1 && notePitchTrack.size() > 17) // end of note
             {
                 std::sort(notePitchTrack.begin(), notePitchTrack.end());
                 float medianPitch = notePitchTrack[notePitchTrack.size()/2];
