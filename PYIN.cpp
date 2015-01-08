@@ -45,6 +45,7 @@ PYIN::PYIN(float inputSampleRate) :
     m_oNotes(0),
     m_threshDistr(2.0f),
     m_outputUnvoiced(0.0f),
+    m_onsetSensitivity(0.0),
     m_pitchProb(0),
     m_timestamp(0),
     m_level(0)
@@ -164,6 +165,17 @@ PYIN::getParameterDescriptors() const
     d.valueNames.push_back("Yes, as negative frequencies");
     list.push_back(d);
 
+    d.identifier = "onsetsensitivity";
+    d.valueNames.clear();
+    d.name = "Onset sensitivity";
+    d.description = "Adds additional note onsets when RMS increases.";
+    d.unit = "";
+    d.minValue = 0.0f;
+    d.maxValue = 1.0f;
+    d.defaultValue = 0.0f;
+    d.isQuantized = false;
+    list.push_back(d);
+
     return list;
 }
 
@@ -175,6 +187,9 @@ PYIN::getParameter(string identifier) const
     }
     if (identifier == "outputunvoiced") {
             return m_outputUnvoiced;
+    }
+    if (identifier == "onsetsensitivity") {
+            return m_onsetSensitivity;
     }
     return 0.f;
 }
@@ -190,7 +205,10 @@ PYIN::setParameter(string identifier, float value)
     {
         m_outputUnvoiced = value;
     }
-    
+    if (identifier == "onsetsensitivity")
+    {
+        m_onsetSensitivity = value;
+    }
 }
 
 PYIN::ProgramList
@@ -477,7 +495,7 @@ PYIN::getRemainingFeatures()
         isVoiced = mnOut[iFrame].noteState < 3
                    && smoothedPitch[iFrame].size() > 0
                    && (iFrame >= nFrame-2
-                       || ((m_level[iFrame]/m_level[iFrame+2]) > 0.8));
+                       || ((m_level[iFrame]/m_level[iFrame+2]) > m_onsetSensitivity));
         // std::cerr << m_level[iFrame]/m_level[iFrame-1] << std::endl;
         if (isVoiced && iFrame != nFrame-1)
         {
@@ -489,7 +507,7 @@ PYIN::getRemainingFeatures()
             float pitch = smoothedPitch[iFrame][0].first;
             notePitchTrack.push_back(pitch); // add to the note's pitch track
         } else { // not currently voiced
-            if (oldIsVoiced == 1 && notePitchTrack.size() > 14) // end of note
+            if (oldIsVoiced == 1 && notePitchTrack.size() > 17) // end of note
             {
                 std::sort(notePitchTrack.begin(), notePitchTrack.end());
                 float medianPitch = notePitchTrack[notePitchTrack.size()/2];
