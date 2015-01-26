@@ -357,6 +357,7 @@ LocalCandidatePYIN::getRemainingFeatures()
     boost::math::normal normalDist(0, 8); // semitones sd
     float maxNormalDist = boost::math::pdf(normalDist, 0);
     
+    // Viterbi-decode multiple times with different frequencies emphasised
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate)
     {
         pitchTracks.push_back(vector<float>(nFrame));
@@ -430,10 +431,11 @@ LocalCandidatePYIN::getRemainingFeatures()
     for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) outputFrequencies.push_back(vector<float>());
 
     int actualCandidateNumber = 0;
-    for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate) {
+    for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate)
+    {
         bool isDuplicate = false;
         for (size_t i = 0; i < duplicates.size(); ++i) {
-            // std::cerr << duplicates[i] << std::endl;
+    
             if (duplicates[i] == iCandidate) {
                 isDuplicate = true;
                 break;
