@@ -323,7 +323,6 @@ LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp
                 m_inputSampleRate * (1.0 /
                 YinUtil::parabolicInterpolation(yinBuffer, iBuf, yinBufferSize));
             double tempPitch = 12 * std::log(currentF0/440)/std::log(2.) + 69;
-            if (tempPitch != tempPitch) std::cerr << "AAAAAAAAA! " << currentF0 << " " << (m_inputSampleRate * 1.0 / iBuf) << std::endl;
             tempPitchProb.push_back(pair<double, double>(tempPitch, peakProbability[iBuf]));
         }
     }
@@ -358,44 +357,45 @@ LocalCandidatePYIN::getRemainingFeatures()
     boost::math::normal normalDist(0, 8); // semitones sd
     float maxNormalDist = boost::math::pdf(normalDist, 0);
     
+    // Viterbi-decode multiple times with different frequencies emphasised
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate)
     {
         pitchTracks.push_back(vector<float>(nFrame));
         vector<vector<pair<double,double> > > tempPitchProb;
         float centrePitch = 45 + 3 * iCandidate;
+
         for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) {
             tempPitchProb.push_back(vector<pair<double,double> >());
             float sumProb = 0;
             float pitch = 0;
             float prob = 0;
-            for (size_t iProb = 0; iProb < m_pitchProb[iFrame].size(); ++iProb) {
-                pitch = m_pitchProb[iFrame][iProb].first;
-                // std::cerr << pitch << " " << m_pitchProb[iFrame][iProb].second << std::endl;
-                prob  = m_pitchProb[iFrame][iProb].second * boost::math::pdf(normalDist, pitch-centrePitch) / maxNormalDist * 2;
+            for (size_t iProb = 0; iProb < m_pitchProb[iFrame].size(); ++iProb)
+            {
+                pitch = m_pitchProb[iFrame][iProb].first;                
+                prob  = m_pitchProb[iFrame][iProb].second * 
+                    boost::math::pdf(normalDist, pitch-centrePitch) /
+                    maxNormalDist * 2;
                 sumProb += prob;
-                tempPitchProb[iFrame].push_back(pair<double,double>(pitch,prob));
-                // std::cerr << m_timestamp[iFrame] << " " << iCandidate << " " << centrePitch << " " << pitch << " " << prob << std::endl;
+                tempPitchProb[iFrame].push_back(
+                    pair<double,double>(pitch,prob));
             }
-            for (size_t iProb = 0; iProb < m_pitchProb[iFrame].size(); ++iProb) {
+            for (size_t iProb = 0; iProb < m_pitchProb[iFrame].size(); ++iProb)
+            {
                 tempPitchProb[iFrame][iProb].second /= sumProb;
             }
         }
+
         vector<float> mpOut = mp.process(tempPitchProb);
         float prevFreq = 0;
         for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
         {
             if (mpOut[iFrame] > 0) {
-                // if (prevFreq>0 && fabs(log2(mpOut[iFrame]/prevFreq)) > 0.1) {
-                //     for (int jFrame = iFrame; jFrame != -1; --jFrame) {
-                //         // hack: setting all freqs to 0 -- will be eliminated later
-                //         pitchTracks[iCandidate][jFrame] = 0;
-                //     }
-                //     break;
-                // }
+
                 pitchTracks[iCandidate][iFrame] = mpOut[iFrame];
                 freqSum[iCandidate] += mpOut[iFrame];
                 freqNumber[iCandidate]++;
                 prevFreq = mpOut[iFrame];
+
             }
         }
         freqMean[iCandidate] = freqSum[iCandidate]*1.0/freqNumber[iCandidate];
@@ -431,10 +431,11 @@ LocalCandidatePYIN::getRemainingFeatures()
     for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) outputFrequencies.push_back(vector<float>());
 
     int actualCandidateNumber = 0;
-    for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate) {
+    for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate)
+    {
         bool isDuplicate = false;
         for (size_t i = 0; i < duplicates.size(); ++i) {
-            // std::cerr << duplicates[i] << std::endl;
+    
             if (duplicates[i] == iCandidate) {
                 isDuplicate = true;
                 break;
