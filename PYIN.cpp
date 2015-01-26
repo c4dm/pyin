@@ -45,7 +45,8 @@ PYIN::PYIN(float inputSampleRate) :
     m_oNotes(0),
     m_threshDistr(2.0f),
     m_outputUnvoiced(0.0f),
-    m_onsetSensitivity(0.0),
+    m_onsetSensitivity(0.6f),
+    m_pruneThresh(0.07f),
     m_pitchProb(0),
     m_timestamp(0),
     m_level(0)
@@ -172,7 +173,18 @@ PYIN::getParameterDescriptors() const
     d.unit = "";
     d.minValue = 0.0f;
     d.maxValue = 1.0f;
-    d.defaultValue = 0.0f;
+    d.defaultValue = 0.5f;
+    d.isQuantized = false;
+    list.push_back(d);
+
+    d.identifier = "prunethresh";
+    d.valueNames.clear();
+    d.name = "Duration pruning threshold.";
+    d.description = "Prune notes that are shorter than this value.";
+    d.unit = "";
+    d.minValue = 0.0f;
+    d.maxValue = 0.2f;
+    d.defaultValue = 0.05f;
     d.isQuantized = false;
     list.push_back(d);
 
@@ -191,6 +203,9 @@ PYIN::getParameter(string identifier) const
     if (identifier == "onsetsensitivity") {
             return m_onsetSensitivity;
     }
+    if (identifier == "prunethresh") {
+            return m_pruneThresh;
+    }
     return 0.f;
 }
 
@@ -208,6 +223,10 @@ PYIN::setParameter(string identifier, float value)
     if (identifier == "onsetsensitivity")
     {
         m_onsetSensitivity = value;
+    }
+    if (identifier == "prunethresh")
+    {
+        m_pruneThresh = value;
     }
 }
 
@@ -488,6 +507,8 @@ PYIN::getRemainingFeatures()
     bool isVoiced = 0;
     bool oldIsVoiced = 0;
     size_t nFrame = m_pitchProb.size();
+
+    float minNoteFrames = (m_inputSampleRate*m_pruneThresh) / m_stepSize;
     
     std::vector<float> notePitchTrack; // collects pitches for one note at a time
     for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
@@ -496,27 +517,31 @@ PYIN::getRemainingFeatures()
                    && smoothedPitch[iFrame].size() > 0
                    && (iFrame >= nFrame-2
                        || ((m_level[iFrame]/m_level[iFrame+2]) > m_onsetSensitivity));
-        // std::cerr << m_level[iFrame]/m_level[iFrame-1] << std::endl;
+        // std::cerr << m_level[iFrame]/m_level[iFrame-1] << " " << isVoiced << std::endl;
         if (isVoiced && iFrame != nFrame-1)
         {
             if (oldIsVoiced == 0) // beginning of a note
             {
                 onsetFrame = iFrame;
-                notePitchTrack.clear();
             }
             float pitch = smoothedPitch[iFrame][0].first;
             notePitchTrack.push_back(pitch); // add to the note's pitch track
         } else { // not currently voiced
-            if (oldIsVoiced == 1 && notePitchTrack.size() > 17) // end of note
+            if (oldIsVoiced == 1) // end of note
             {
-                std::sort(notePitchTrack.begin(), notePitchTrack.end());
-                float medianPitch = notePitchTrack[notePitchTrack.size()/2];
-                float medianFreq = std::pow(2,(medianPitch - 69) / 12) * 440;
-                f.values.clear();
-                f.values.push_back(medianFreq);
-                f.timestamp = m_timestamp[onsetFrame];
-                f.duration = m_timestamp[iFrame] - m_timestamp[onsetFrame];
-                fs[m_oNotes].push_back(f);
+                // std::cerr << notePitchTrack.size() << " " << minNoteFrames << std::endl;
+                if (notePitchTrack.size() >= minNoteFrames)
+                {
+                    std::sort(notePitchTrack.begin(), notePitchTrack.end());
+                    float medianPitch = notePitchTrack[notePitchTrack.size()/2];
+                    float medianFreq = std::pow(2,(medianPitch - 69) / 12) * 440;
+                    f.values.clear();
+                    f.values.push_back(medianFreq);
+                    f.timestamp = m_timestamp[onsetFrame];
+                    f.duration = m_timestamp[iFrame] - m_timestamp[onsetFrame];
+                    fs[m_oNotes].push_back(f);
+                }
+                notePitchTrack.clear();
             }
         }
         oldIsVoiced = isVoiced;

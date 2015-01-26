@@ -73,6 +73,7 @@ protected:
     float m_threshDistr;
     float m_outputUnvoiced;
     float m_onsetSensitivity;
+    float m_pruneThresh;
     vector<vector<pair<double, double> > > m_pitchProb;
     vector<Vamp::RealTime> m_timestamp;
     vector<float> m_level;
