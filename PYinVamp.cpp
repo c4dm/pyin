@@ -449,10 +449,8 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
     }
     rms /= m_blockSize;
     rms = sqrt(rms);
-    // float m_lowAmp = 0.5;
+    
     bool isLowAmplitude = (rms < m_lowAmp);
-    float factor = ((rms+0.01*m_lowAmp)/(1.01*m_lowAmp));
-    // std::cerr << rms << " " << factor << std::endl;
     
     Yin::YinOutput yo = m_yin.processProbabilisticYin(dInputBuffers);
     delete [] dInputBuffers;
@@ -466,9 +464,11 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
     {
         double tempPitch = 12 * std::log(yo.freqProb[iCandidate].first/440)/std::log(2.) + 69;
         if (!isLowAmplitude)
+        {
             tempPitchProb.push_back(pair<double, double>
                 (tempPitch, yo.freqProb[iCandidate].second));
-        else {
+        } else {
+            float factor = ((rms+0.01*m_lowAmp)/(1.01*m_lowAmp));
             tempPitchProb.push_back(pair<double, double>
                 (tempPitch, yo.freqProb[iCandidate].second*factor));
         }
