@@ -46,9 +46,9 @@ PYinVamp::PYinVamp(float inputSampleRate) :
     m_threshDistr(2.0f),
     m_outputUnvoiced(0.0f),
     m_preciseTime(0.0f),
-    m_lowAmp(0.1),
-    m_onsetSensitivity(0.6f),
-    m_pruneThresh(0.07f),
+    m_lowAmp(0.1f),
+    m_onsetSensitivity(0.7f),
+    m_pruneThresh(0.1f),
     m_pitchProb(0),
     m_timestamp(0),
     m_level(0)
@@ -198,7 +198,7 @@ PYinVamp::getParameterDescriptors() const
     d.unit = "";
     d.minValue = 0.0f;
     d.maxValue = 1.0f;
-    d.defaultValue = 0.5f;
+    d.defaultValue = 0.7f;
     d.isQuantized = false;
     list.push_back(d);
 
@@ -209,7 +209,7 @@ PYinVamp::getParameterDescriptors() const
     d.unit = "";
     d.minValue = 0.0f;
     d.maxValue = 0.2f;
-    d.defaultValue = 0.05f;
+    d.defaultValue = 0.1f;
     d.isQuantized = false;
     list.push_back(d);
 
@@ -418,9 +418,7 @@ PYinVamp::reset()
 {    
     m_yin.setThresholdDistr(m_threshDistr);
     m_yin.setFrameSize(m_blockSize);
-
-    //TODO: Restore this! (MM)
-    //!!! m_yin.setFast(!m_preciseTime);
+    m_yin.setFast(!m_preciseTime);
     
     m_pitchProb.clear();
     m_timestamp.clear();
@@ -589,7 +587,7 @@ PYinVamp::getRemainingFeatures()
         } else { // not currently voiced
             if (oldIsVoiced == 1) // end of note
             {
-                // std::cerr << notePitchTrack.size() << " " << minNoteFrames << std::endl;
+                std::cerr << notePitchTrack.size() << " " << minNoteFrames << std::endl;
                 if (notePitchTrack.size() >= minNoteFrames)
                 {
                     std::sort(notePitchTrack.begin(), notePitchTrack.end());
