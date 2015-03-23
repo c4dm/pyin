@@ -25,13 +25,12 @@
 
 using std::vector;
 
-Yin::Yin(size_t frameSize, size_t inputSampleRate, double thresh, bool fast) : 
+Yin::Yin(size_t frameSize, size_t inputSampleRate, double thresh) : 
     m_frameSize(frameSize),
     m_inputSampleRate(inputSampleRate),
     m_thresh(thresh),
     m_threshDistr(2),
-    m_yinBufferSize(frameSize/2),
-    m_fast(fast)
+    m_yinBufferSize(frameSize/2)
 {
     if (frameSize & (frameSize-1)) {
       //  throw "N must be a power of two";
@@ -46,9 +45,9 @@ Yin::YinOutput
 Yin::process(const double *in) const {
     
     double* yinBuffer = new double[m_yinBufferSize];
+
     // calculate aperiodicity function for all periods
-    if (m_fast) YinUtil::fastDifference(in, yinBuffer, m_yinBufferSize);
-    else YinUtil::slowDifference(in, yinBuffer, m_yinBufferSize);    
+    YinUtil::fastDifference(in, yinBuffer, m_yinBufferSize);    
     YinUtil::cumulativeDifference(yinBuffer, m_yinBufferSize);
 
     int tau = 0;
@@ -58,7 +57,7 @@ Yin::process(const double *in) const {
     double aperiodicity;
     double f0;
     
-    if (tau!=0 && tau!=int(m_yinBufferSize)-1)
+    if (tau!=0)
     {
         interpolatedTau = YinUtil::parabolicInterpolation(yinBuffer, abs(tau), m_yinBufferSize);
         f0 = m_inputSampleRate * (1.0 / interpolatedTau);
@@ -83,21 +82,26 @@ Yin::process(const double *in) const {
 
 Yin::YinOutput
 Yin::processProbabilisticYin(const double *in) const {
-
+    
     double* yinBuffer = new double[m_yinBufferSize];
 
     // calculate aperiodicity function for all periods
-    if (m_fast) YinUtil::fastDifference(in, yinBuffer, m_yinBufferSize);
-    else YinUtil::slowDifference(in, yinBuffer, m_yinBufferSize);    
-
+    YinUtil::fastDifference(in, yinBuffer, m_yinBufferSize);    
     YinUtil::cumulativeDifference(yinBuffer, m_yinBufferSize);
 
     vector<double> peakProbability = YinUtil::yinProb(yinBuffer, m_threshDistr, m_yinBufferSize);
-        
-    // basic yin output
-    Yin::YinOutput yo(0,0,0);
-    for (int iBuf = 1; iBuf < int(m_yinBufferSize)-1; ++iBuf)
+    
+    // calculate overall "probability" from peak probability
+    double probSum = 0;
+    for (size_t iBin = 0; iBin < m_yinBufferSize; ++iBin)
     {
+        probSum += peakProbability[iBin];
+    }
+    double rms = std::sqrt(YinUtil::sumSquare(in, 0, m_yinBufferSize)/m_yinBufferSize);
+    Yin::YinOutput yo(0,0,rms);
+    for (size_t iBuf = 0; iBuf < m_yinBufferSize; ++iBuf)
+    {
+        yo.salience.push_back(peakProbability[iBuf]);
         if (peakProbability[iBuf] > 0)
         {
             double currentF0 = 
@@ -107,11 +111,6 @@ Yin::processProbabilisticYin(const double *in) const {
         }
     }
     
-    // add salience
-    for (size_t iBuf = 0; iBuf < m_yinBufferSize; ++iBuf) {
-        yo.salience.push_back(peakProbability[iBuf]);
-    }
-
     // std::cerr << yo.freqProb.size() << std::endl;
     
     delete [] yinBuffer;
@@ -141,51 +140,9 @@ Yin::setFrameSize(size_t parameter)
     return 0;
 }
 
-int
-Yin::setFast(bool fast)
-{
-    m_fast = fast;
-    return 0;
-}
-
 // int
 // Yin::setRemoveUnvoiced(bool parameter)
 // {
 //     m_removeUnvoiced = parameter;
 //     return 0;
 // }
-
-float
-Yin::constrainedMinPick(const double *in, const float minFreq, const int maxFreq) const {
-    
-    double* yinBuffer = new double[m_yinBufferSize];
-
-    // calculate aperiodicity function for all periods
-    YinUtil::slowDifference(in, yinBuffer, m_yinBufferSize);    
-    YinUtil::cumulativeDifference(yinBuffer, m_yinBufferSize);
-    
-    int minPeriod = m_inputSampleRate / maxFreq;
-    int maxPeriod = m_inputSampleRate / minFreq;
-    
-    if (minPeriod < 0 || maxPeriod > int(m_yinBufferSize) || minPeriod > maxPeriod) {
-        delete [] yinBuffer;
-        return 0.f;
-    }
-    
-    float bestVal = 1000;
-    int   bestTau = 0;
-    for (int tau = minPeriod; tau <= maxPeriod; ++tau)
-    {
-        if (yinBuffer[tau] < bestVal) 
-        {
-            bestVal = yinBuffer[tau];
-            bestTau = tau;
-        }
-    }
-    
-    float interpolatedTau =
-        YinUtil::parabolicInterpolation(yinBuffer, bestTau, m_yinBufferSize);
-    
-    delete [] yinBuffer;
-    return m_inputSampleRate * (1.0 / interpolatedTau);
-}

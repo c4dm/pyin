@@ -6,6 +6,7 @@
 @prefix dc:       <http://purl.org/dc/elements/1.1/> .
 @prefix af:       <http://purl.org/ontology/af/> .
 @prefix foaf:     <http://xmlns.com/foaf/0.1/> .
+@prefix doap: 	  <http://usefulinc.com/ns/doap#> .
 @prefix cc:       <http://web.resource.org/cc/> .
 @prefix :         <#> .
 
@@ -13,18 +14,26 @@
     foaf:maker          <http://www.vamp-plugins.org/doap.rdf#template-generator> ;
     foaf:primaryTopic   <http://vamp-plugins.org/rdf/plugins/pyin> .
 
-:pyin a  vamp:PluginLibrary ;
+:maker
+    foaf:name "Matthias Mauch" ;
+    foaf:logo <http://vamp-plugins.org/rdf/plugins/makers/qm.png> ;
+    foaf:page <http://c4dm.eecs.qmul.ac.uk/> .
+
+plugbase:library a  vamp:PluginLibrary ;
     vamp:identifier "pyin"  ; 
+    dc:title "pYIN" ;
+    dc:description "pYIN is a modification of the well-loved YIN algorithm for fundamental frequency (F0) estimation in monophonic audio." ;
     vamp:available_plugin plugbase:pyin ; 
     vamp:available_plugin plugbase:yin ; 
     foaf:page <http://code.soundsoftware.ac.uk/projects/pyin> ;
+    foaf:maker :maker ;
     .
 
 plugbase:pyin a   vamp:Plugin ;
     dc:title              "pYin" ;
     vamp:name             "pYin" ;
     dc:description        """Monophonic pitch and note tracking based on a probabilistic Yin extension.""" ;
-    foaf:maker            [ foaf:name "Matthias Mauch" ] ; # FIXME could give plugin author's URI here
+    foaf:maker            :maker ;
     dc:rights             """GPL""" ;
 #   cc:license            <Place plugin license URI here and uncomment> ; 
     vamp:identifier       "pyin" ;
@@ -150,7 +159,7 @@ plugbase:yin a   vamp:Plugin ;
     dc:title              "Yin" ;
     vamp:name             "Yin" ;
     dc:description        """A vamp implementation of the Yin algorithm for monophonic frequency estimation.""" ;
-    foaf:maker            [ foaf:name "Matthias Mauch" ] ; # FIXME could give plugin author's URI here
+    foaf:maker            :maker ;
     dc:rights             """GPL""" ;
 #   cc:license            <Place plugin license URI here and uncomment> ; 
     vamp:identifier       "yin" ;

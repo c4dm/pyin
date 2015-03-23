@@ -22,8 +22,7 @@ using std::vector;
 using std::pair;
 
 MonoPitchHMM::MonoPitchHMM() :
-m_minFreq(61.735), // b 1
-// m_minFreq(110),
+m_minFreq(61.735),
 m_nBPS(5),
 m_nPitch(0),
 m_transitionWidth(0),
@@ -31,7 +30,7 @@ m_selfTrans(0.99),
 m_yinTrust(.5),
 m_freqs(0)
 {
-    m_transitionWidth = 9*(m_nBPS/2) + 1;
+    m_transitionWidth = 5*(m_nBPS/2) + 1;
     m_nPitch = 69 * m_nBPS;
     m_freqs = vector<double>(2*m_nPitch);
     for (size_t iPitch = 0; iPitch < m_nPitch; ++iPitch)
