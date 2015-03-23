@@ -65,7 +65,6 @@ depend:
 # DO NOT DELETE
 
 libmain.o: PYinVamp.h Yin.h MeanFilter.h YinVamp.h LocalCandidatePYIN.h
-libmain.o: YinVampFreqConstrained.h
 LocalCandidatePYIN.o: LocalCandidatePYIN.h Yin.h MeanFilter.h MonoPitch.h
 LocalCandidatePYIN.o: MonoPitchHMM.h SparseHMM.h YinUtil.h
 MonoNote.o: MonoNote.h MonoNoteHMM.h MonoNoteParameters.h SparseHMM.h

@@ -236,8 +236,6 @@ LocalCandidatePYIN::getOutputDescriptors() const
     OutputList outputs;
 
     OutputDescriptor d;
-    
-    int outputNumber = 0;
 
     d.identifier = "pitchtrackcandidates";
     d.name = "Pitch track candidates";
