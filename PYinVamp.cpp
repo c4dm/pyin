@@ -587,7 +587,7 @@ PYinVamp::getRemainingFeatures()
         } else { // not currently voiced
             if (oldIsVoiced == 1) // end of note
             {
-                std::cerr << notePitchTrack.size() << " " << minNoteFrames << std::endl;
+                // std::cerr << notePitchTrack.size() << " " << minNoteFrames << std::endl;
                 if (notePitchTrack.size() >= minNoteFrames)
                 {
                     std::sort(notePitchTrack.begin(), notePitchTrack.end());

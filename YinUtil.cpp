@@ -333,52 +333,11 @@ YinUtil::parabolicInterpolation(const double *yinBuffer, const size_t tau, const
     }
     
     double betterTau = 0.0;
-    // size_t x0;
-    // size_t x2;
-
-    // if (tau < 1) 
-    // {
-    //     x0 = tau;
-    // } else {
-    //     x0 = tau - 1;
-    // }
-    // 
-    // if (tau + 1 < yinBufferSize) 
-    // {
-    //     x2 = tau + 1;
-    // } else {
-    //     x2 = tau;
-    // }
-    // 
-    // if (x0 == tau) 
-    // {
-    //     if (yinBuffer[tau] <= yinBuffer[x2]) 
-    //     {
-    //         betterTau = tau;
-    //     } else {
-    //         betterTau = x2;
-    //     }
-    // } 
-    // else if (x2 == tau) 
-    // {
-    //     if (yinBuffer[tau] <= yinBuffer[x0]) 
-    //     {
-    //         betterTau = tau;
-    //     } 
-    //     else 
-    //     {
-    //         betterTau = x0;
-    //     }
-    // } 
-    // else 
-    // {
     if (tau > 0 && tau < yinBufferSize-1) {
         float s0, s1, s2;
         s0 = yinBuffer[tau-1];
         s1 = yinBuffer[tau];
         s2 = yinBuffer[tau+1];
-        // fixed AUBIO implementation, thanks to Karl Helgason:
-        // (2.0f * s1 - s2 - s0) was incorrectly multiplied with -1
         
         double adjustment = (s2 - s0) / (2 * (2 * s1 - s2 - s0));
         
@@ -386,7 +345,7 @@ YinUtil::parabolicInterpolation(const double *yinBuffer, const size_t tau, const
         
         betterTau = tau + adjustment;
     } else {
-        std::cerr << "WARNING: can't do interpolation at the edge (tau = " << tau << "), will return un-interpolated value.\n";
+        // std::cerr << "WARNING: can't do interpolation at the edge (tau = " << tau << "), will return un-interpolated value.\n";
         betterTau = tau;
     }
     return betterTau;
