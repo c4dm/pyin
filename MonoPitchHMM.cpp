@@ -22,7 +22,7 @@ using std::vector;
 using std::pair;
 
 MonoPitchHMM::MonoPitchHMM() :
-m_minFreq(55),
+m_minFreq(61.735),
 m_nBPS(5),
 m_nPitch(0),
 m_transitionWidth(0),
@@ -31,7 +31,7 @@ m_yinTrust(.5),
 m_freqs(0)
 {
     m_transitionWidth = 5*(m_nBPS/2) + 1;
-    m_nPitch = 48 * m_nBPS;
+    m_nPitch = 69 * m_nBPS;
     m_freqs = vector<double>(2*m_nPitch);
     for (size_t iPitch = 0; iPitch < m_nPitch; ++iPitch)
     {
@@ -68,6 +68,8 @@ MonoPitchHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
     }
     
     double probReallyPitched = m_yinTrust * probYinPitched;
+    // std::cerr << probReallyPitched << " " << probYinPitched << std::endl;
+    // damn, I forget what this is all about...
     for (size_t iPitch = 0; iPitch < m_nPitch; ++iPitch)
     {
         if (probYinPitched > 0) out[iPitch] *= (probReallyPitched/probYinPitched) ;

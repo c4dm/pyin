@@ -31,7 +31,7 @@ using std::pair;
 class Yin
 {
 public:
-    Yin(size_t frameSize, size_t inputSampleRate, double thresh = 0.2);
+    Yin(size_t frameSize, size_t inputSampleRate, double thresh = 0.2, bool fast = true);
     virtual ~Yin();
 
     struct YinOutput {
@@ -53,6 +53,7 @@ public:
     int setThreshold(double parameter);
     int setThresholdDistr(float parameter);
     int setFrameSize(size_t frameSize);
+    int setFast(bool fast);
     // int setRemoveUnvoiced(bool frameSize);
     YinOutput process(const double *in) const;
     YinOutput processProbabilisticYin(const double *in) const;
@@ -63,6 +64,7 @@ private:
     mutable double m_thresh;
     mutable size_t m_threshDistr;
     mutable size_t m_yinBufferSize;
+    mutable bool   m_fast;
     // mutable bool m_removeUnvoiced;
 };
 

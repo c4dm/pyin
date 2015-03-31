@@ -41,7 +41,7 @@ MonoPitch::process(const vector<vector<pair<double, double> > > pitchProb)
         obsProb.push_back(hmm.calculateObsProb(pitchProb[iFrame]));
     }
     
-    vector<double> *scale = new vector<double>(pitchProb.size());
+    vector<double> *scale = new vector<double>(0);
     
     vector<float> out; 
     

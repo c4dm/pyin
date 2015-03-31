@@ -49,7 +49,7 @@ MonoNoteHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
     double tempProbSum = 0;
     for (size_t i = 0; i < par.n; ++i)
     {
-        if (i % 4 != 2)
+        if (i % par.nSPP != 2)
         {
             // std::cerr << getMidiPitch(i) << std::endl;
             double tempProb = 0;
@@ -68,7 +68,9 @@ MonoNoteHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
                         minDistCandidate = iCandidate;
                     }
                 }
-                tempProb = std::pow(minDistProb, par.yinTrust) * boost::math::pdf(pitchDistr[i], pitchProb[minDistCandidate].first);
+                tempProb = std::pow(minDistProb, par.yinTrust) * 
+                           boost::math::pdf(pitchDistr[i], 
+                                            pitchProb[minDistCandidate].first);
             } else {
                 tempProb = 1;
             }
@@ -79,7 +81,7 @@ MonoNoteHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
     
     for (size_t i = 0; i < par.n; ++i)
     {
-        if (i % 4 != 2)
+        if (i % par.nSPP != 2)
         {
             if (tempProbSum > 0) 
             {
@@ -101,16 +103,15 @@ MonoNoteHMM::build()
     //    0. attack state
     //    1. stable state
     //    2. silent state
-    //    3. inter state
-    // 4-6. second-lowest pitch
-    //    4. attack state
+    // 3-5. second-lowest pitch
+    //    3. attack state
     //    ...
     
     // observation distributions
     for (size_t iState = 0; iState < par.n; ++iState)
     {
         pitchDistr.push_back(boost::math::normal(0,1));
-        if (iState % 4 == 2)
+        if (iState % par.nSPP == 2)
         {
             // silent state starts tracking
             init.push_back(1.0/(par.nS * par.nPPS));
@@ -126,7 +127,6 @@ MonoNoteHMM::build()
         pitchDistr[index] = boost::math::normal(mu, par.sigmaYinPitchAttack);
         pitchDistr[index+1] = boost::math::normal(mu, par.sigmaYinPitchStable);
         pitchDistr[index+2] = boost::math::normal(mu, 1.0); // dummy
-        pitchDistr[index+3] = boost::math::normal(mu, par.sigmaYinPitchInter);
     }
     
     boost::math::normal noteDistanceDistr(0, par.sigma2Note);
@@ -154,54 +154,43 @@ MonoNoteHMM::build()
         to.push_back(index+2); // to silent
         transProb.push_back(par.pStable2Silent);
 
-        from.push_back(index+1);
-        to.push_back(index+3); // to inter-note
-        transProb.push_back(1-par.pStableSelftrans-par.pStable2Silent);
-
         // the "easy" transitions from silent state
         from.push_back(index+2);
         to.push_back(index+2);
         transProb.push_back(par.pSilentSelftrans);
         
-        // the "easy" inter state transition
-        from.push_back(index+3);
-        to.push_back(index+3);
-        transProb.push_back(par.pInterSelftrans);
         
-        // the more complicated transitions from the silent and inter state
+        // the more complicated transitions from the silent
         double probSumSilent = 0;
-        double probSumInter = 0;
-        vector<double> tempTransProbInter;
+
         vector<double> tempTransProbSilent;
         for (size_t jPitch = 0; jPitch < (par.nS * par.nPPS); ++jPitch)
         {
             int fromPitch = iPitch;
             int toPitch = jPitch;
-            double semitoneDistance = std::abs(fromPitch - toPitch) * 1.0 / par.nPPS;
+            double semitoneDistance = 
+                std::abs(fromPitch - toPitch) * 1.0 / par.nPPS;
             
             // if (std::fmod(semitoneDistance, 1) == 0 && semitoneDistance > par.minSemitoneDistance)
-            if (semitoneDistance == 0 || (semitoneDistance > par.minSemitoneDistance && semitoneDistance < par.maxJump))
+            if (semitoneDistance == 0 || 
+                (semitoneDistance > par.minSemitoneDistance 
+                 && semitoneDistance < par.maxJump))
             {
                 size_t toIndex = jPitch * par.nSPP; // note attack index
 
-                double tempWeightSilent = boost::math::pdf(noteDistanceDistr, semitoneDistance);
-                double tempWeightInter = semitoneDistance == 0 ? 0 : tempWeightSilent;
+                double tempWeightSilent = boost::math::pdf(noteDistanceDistr, 
+                                                           semitoneDistance);
                 probSumSilent += tempWeightSilent;
-                probSumInter += tempWeightInter;
 
                 tempTransProbSilent.push_back(tempWeightSilent);
-                tempTransProbInter.push_back(tempWeightInter);
 
                 from.push_back(index+2);
                 to.push_back(toIndex);
-                from.push_back(index+3);
-                to.push_back(toIndex);                
             }
         }
         for (size_t i = 0; i < tempTransProbSilent.size(); ++i)
         {
             transProb.push_back((1-par.pSilentSelftrans) * tempTransProbSilent[i]/probSumSilent);
-            transProb.push_back((1-par.pInterSelftrans) * tempTransProbInter[i]/probSumInter);
         }
     }
 }
