@@ -39,7 +39,7 @@ plugbase:localcandidatepyin a vamp:Plugin ;
 #   cc:license            <Place plugin license URI here and uncomment> ; 
     vamp:identifier       "localcandidatepyin" ;
     vamp:vamp_API_version vamp:api_version_2 ;
-    owl:versionInfo       "1" ;
+    owl:versionInfo       "2" ;
     vamp:input_domain     vamp:TimeDomain ;
     vamp:parameter   plugbase:localcandidatepyin_param_threshdistr ;
     vamp:parameter   plugbase:localcandidatepyin_param_outputunvoiced ;
@@ -105,7 +105,7 @@ plugbase:pyin a   vamp:Plugin ;
 #   cc:license            <Place plugin license URI here and uncomment> ; 
     vamp:identifier       "pyin" ;
     vamp:vamp_API_version vamp:api_version_2 ;
-    owl:versionInfo       "1" ;
+    owl:versionInfo       "2" ;
     vamp:input_domain     vamp:TimeDomain ;
 
     vamp:parameter   plugbase:pyin_param_threshdistr ;
@@ -276,7 +276,7 @@ plugbase:yin a   vamp:Plugin ;
 #   cc:license            <Place plugin license URI here and uncomment> ; 
     vamp:identifier       "yin" ;
     vamp:vamp_API_version vamp:api_version_2 ;
-    owl:versionInfo       "1" ;
+    owl:versionInfo       "2" ;
     vamp:input_domain     vamp:TimeDomain ;
 
     vamp:parameter   plugbase:yin_param_yinThreshold ;
