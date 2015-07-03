@@ -13,7 +13,6 @@ SOURCES += \
     ../Yin.cpp \
     ../SparseHMM.cpp \
     ../MonoPitchHMM.cpp \
-    ../MonoPitch.cpp \
     ../MonoNoteParameters.cpp \
     ../MonoNoteHMM.cpp \
     ../MonoNote.cpp \
@@ -27,7 +26,6 @@ HEADERS += \
     ../Yin.h \
     ../SparseHMM.h \
     ../MonoPitchHMM.h \
-    ../MonoPitch.h \
     ../MonoNoteParameters.h \
     ../MonoNoteHMM.h \
     ../MonoNote.h \

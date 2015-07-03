@@ -25,7 +25,7 @@ using std::pair;
 class SparseHMM
 {
 public:
-    SparseHMM();
+    SparseHMM(int fixedLag);
     virtual const std::vector<double>
                            calculateObsProb(const vector<pair<double, double> >);
     virtual void           build();
@@ -33,8 +33,9 @@ public:
     void                   reset();
     void                   initialise(vector<double> firstObs);
     int                    process(vector<double> newObs);
-    vector<int>            finalise();
+    const vector<int>      track();
     // "sparse" HMM definition
+    int m_fixedLag;
     int m_nState;
     int m_nTrans;
     vector<double> m_init;

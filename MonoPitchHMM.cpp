@@ -22,8 +22,8 @@
 using std::vector;
 using std::pair;
 
-MonoPitchHMM::MonoPitchHMM() :
-SparseHMM(),
+MonoPitchHMM::MonoPitchHMM(int fixedLag) :
+SparseHMM(fixedLag),
 m_minFreq(61.735),
 m_nBPS(5),
 m_nPitch(0),
@@ -155,4 +155,42 @@ MonoPitchHMM::build()
     m_nTrans = m_transProb.size();
     m_delta = vector<double>(m_nState);
     m_oldDelta = vector<double>(m_nState);
+}
+
+/*
+Takes a state number and a pitch-prob vector, then finds the pitch that would
+have been closest to the pitch of the state. Easy to understand? ;)
+*/
+const float
+MonoPitchHMM::nearestFreq(int state, vector<pair<double, double> > pitchProb)
+{
+    float hmmFreq = m_freqs[state];
+    // std::cerr << "hmmFreq " << hmmFreq << std::endl;
+    float bestFreq = 0;
+    float leastDist = 10000;
+    if (hmmFreq > 0)
+    {
+        // This was a Yin estimate, so try to get original pitch estimate back
+        // ... a bit hacky, since we could have direclty saved the frequency
+        // that was assigned to the HMM bin in hmm.calculateObsProb -- but would
+        // have had to rethink the interface of that method.
+
+        // std::cerr << "pitch prob size " << pitchProb.size() << std::endl;
+
+        for (size_t iPt = 0; iPt < pitchProb.size(); ++iPt)
+        {
+            float freq = 440. * 
+                         std::pow(2, 
+                                  (pitchProb[iPt].first - 69)/12);
+            float dist = std::abs(hmmFreq-freq);
+            if (dist < leastDist)
+            {
+                leastDist = dist;
+                bestFreq = freq;
+            }
+        }
+    } else {
+        bestFreq = hmmFreq;
+    }
+    return bestFreq;
 }

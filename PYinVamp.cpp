@@ -13,7 +13,6 @@
 
 #include "PYinVamp.h"
 #include "MonoNote.h"
-#include "MonoPitch.h"
 #include "MonoPitchHMM.h"
 
 #include "vamp-sdk/FFT.h"
@@ -45,13 +44,13 @@ PYinVamp::PYinVamp(float inputSampleRate) :
     m_oSmoothedPitchTrack(0),
     m_oNotes(0),
     m_threshDistr(2.0f),
-    m_fixedLag(0.0f),
+    m_fixedLag(1.0f),
     m_outputUnvoiced(0.0f),
     m_preciseTime(0.0f),
     m_lowAmp(0.1f),
     m_onsetSensitivity(0.7f),
     m_pruneThresh(0.1f),
-    m_pitchHmm(),
+    m_pitchHmm(0),
     m_pitchProb(0),
     m_timestamp(0),
     m_level(0)
@@ -442,6 +441,9 @@ PYinVamp::reset()
     m_yin.setThresholdDistr(m_threshDistr);
     m_yin.setFrameSize(m_blockSize);
     m_yin.setFast(!m_preciseTime);
+
+    if (m_fixedLag == 1.f) m_pitchHmm = MonoPitchHMM(100);
+    else                   m_pitchHmm = MonoPitchHMM(0);
     
     m_pitchProb.clear();
     m_timestamp.clear();
@@ -493,21 +495,50 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
         }
     }
 
-    if (m_fixedLag == 0.f)
+    vector<double> tempObsProb = m_pitchHmm.calculateObsProb(tempPitchProb);
+    if (m_timestamp.empty())
     {
-        vector<double> tempObsProb = m_pitchHmm.calculateObsProb(tempPitchProb);
-        if (m_timestamp.empty())
-        {
-            m_pitchHmm.initialise(tempObsProb);
-        } else {
-            m_pitchHmm.process(tempObsProb);
-        }
-        m_pitchProb.push_back(tempPitchProb);
+        m_pitchHmm.initialise(tempObsProb);
     } else {
-        // Damn, so I need the hmm right here! Sadly it isn't defined here yet.
-        // Perhaps I could re-design the whole shabang 
+        m_pitchHmm.process(tempObsProb);
     }
+
+    m_pitchProb.push_back(tempPitchProb);
     m_timestamp.push_back(timestamp);
+
+    int lag = m_pitchHmm.m_fixedLag;
+
+    if (m_fixedLag == 1.f)
+    {
+        if (m_timestamp.size() == lag + 1)
+        {
+            m_timestamp.pop_front();
+            m_pitchProb.pop_front();
+
+            Feature f;
+            f.hasTimestamp = true;
+            vector<int> rawPitchPath = m_pitchHmm.track();
+            float freq = m_pitchHmm.nearestFreq(rawPitchPath[0], 
+                                                m_pitchProb[0]);
+            f.timestamp = m_timestamp[0];
+            f.values.clear();
+
+            // different output modes
+            if (freq < 0 && (m_outputUnvoiced==0))
+            {
+
+            } else {
+                if (m_outputUnvoiced == 1)
+                {
+                    f.values.push_back(fabs(freq));
+                } else {
+                    f.values.push_back(freq);
+                }
+                fs[m_oSmoothedPitchTrack].push_back(f);
+            }
+        }
+    }
+
 
     // F0 CANDIDATES
     Feature f;
@@ -560,16 +591,16 @@ PYinVamp::getRemainingFeatures()
 
     // ================== P I T C H  T R A C K =================================
 
-    vector<int> rawPitchPath = m_pitchHmm.finalise();
+    vector<int> rawPitchPath = m_pitchHmm.track();
     vector<float> mpOut; 
     
     for (size_t iFrame = 0; iFrame < rawPitchPath.size(); ++iFrame)
     {
-        float freq = pitchState2Freq(rawPitchPath[iFrame], m_pitchProb[iFrame]);
+        float freq = m_pitchHmm.nearestFreq(rawPitchPath[iFrame], 
+                                            m_pitchProb[iFrame]);
         mpOut.push_back(freq); // for note processing below
         
         f.timestamp = m_timestamp[iFrame];
-        // std::cerr << f.timestamp << std::endl;
         f.values.clear();
 
         // different output modes
@@ -582,114 +613,70 @@ PYinVamp::getRemainingFeatures()
         }
         fs[m_oSmoothedPitchTrack].push_back(f);
     }
-
-    // for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame)
-    // {
-    //     if (mpOut[iFrame] < 0 && (m_outputUnvoiced==0)) continue;
-
-    //     if (m_outputUnvoiced == 1)
-    //     {
-    //         f.values.push_back(fabs(mpOut[iFrame]));
-    //     } else {
-    //         f.values.push_back(mpOut[iFrame]);
-    //     }
-        
-    //     fs[m_oSmoothedPitchTrack].push_back(f);
-    // }
     
     // ======================== N O T E S ======================================
-    MonoNote mn;
-    std::vector<std::vector<std::pair<double, double> > > smoothedPitch;
-    for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame) {
-        std::vector<std::pair<double, double> > temp;
-        if (mpOut[iFrame] > 0)
-        {
-            double tempPitch = 12 * 
-                               std::log(mpOut[iFrame]/440)/std::log(2.) + 69;
-            temp.push_back(std::pair<double,double>(tempPitch, .9));
-        }
-        smoothedPitch.push_back(temp);
-    }
-    // vector<MonoNote::FrameOutput> mnOut = mn.process(m_pitchProb);
-    vector<MonoNote::FrameOutput> mnOut = mn.process(smoothedPitch);
+    // MonoNote mn;
+    // std::vector<std::vector<std::pair<double, double> > > smoothedPitch;
+    // for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame) {
+    //     std::vector<std::pair<double, double> > temp;
+    //     if (mpOut[iFrame] > 0)
+    //     {
+    //         double tempPitch = 12 * 
+    //                            std::log(mpOut[iFrame]/440)/std::log(2.) + 69;
+    //         temp.push_back(std::pair<double,double>(tempPitch, .9));
+    //     }
+    //     smoothedPitch.push_back(temp);
+    // }
+    // // vector<MonoNote::FrameOutput> mnOut = mn.process(m_pitchProb);
+    // vector<MonoNote::FrameOutput> mnOut = mn.process(smoothedPitch);
     
-    // turning feature into a note feature
-    f.hasTimestamp = true;
-    f.hasDuration = true;
-    f.values.clear();
+    // // turning feature into a note feature
+    // f.hasTimestamp = true;
+    // f.hasDuration = true;
+    // f.values.clear();
         
-    int onsetFrame = 0;
-    bool isVoiced = 0;
-    bool oldIsVoiced = 0;
-    size_t nFrame = m_pitchProb.size();
+    // int onsetFrame = 0;
+    // bool isVoiced = 0;
+    // bool oldIsVoiced = 0;
+    // size_t nFrame = m_pitchProb.size();
 
-    float minNoteFrames = (m_inputSampleRate*m_pruneThresh) / m_stepSize;
+    // float minNoteFrames = (m_inputSampleRate*m_pruneThresh) / m_stepSize;
     
-    // the body of the loop below should be in a function/method
-    std::vector<float> notePitchTrack; // collects pitches for one note at a time
-    for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
-    {
-        isVoiced = mnOut[iFrame].noteState < 3
-                   && smoothedPitch[iFrame].size() > 0
-                   && (iFrame >= nFrame-2
-                       || ((m_level[iFrame]/m_level[iFrame+2]) > 
-                        m_onsetSensitivity));
-        if (isVoiced && iFrame != nFrame-1)
-        {
-            if (oldIsVoiced == 0) // beginning of a note
-            {
-                onsetFrame = iFrame;
-            }
-            float pitch = smoothedPitch[iFrame][0].first;
-            notePitchTrack.push_back(pitch); // add to the note's pitch track
-        } else { // not currently voiced
-            if (oldIsVoiced == 1) // end of note
-            {
-                if (notePitchTrack.size() >= minNoteFrames)
-                {
-                    std::sort(notePitchTrack.begin(), notePitchTrack.end());
-                    float medianPitch = notePitchTrack[notePitchTrack.size()/2];
-                    float medianFreq = std::pow(2,(medianPitch - 69) / 12) * 440;
-                    f.values.clear();
-                    f.values.push_back(medianFreq);
-                    f.timestamp = m_timestamp[onsetFrame];
-                    f.duration = m_timestamp[iFrame] - m_timestamp[onsetFrame];
-                    fs[m_oNotes].push_back(f);
-                }
-                notePitchTrack.clear();
-            }
-        }
-        oldIsVoiced = isVoiced;
-    }
+    // // the body of the loop below should be in a function/method
+    // std::vector<float> notePitchTrack; // collects pitches for one note at a time
+    // for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
+    // {
+    //     isVoiced = mnOut[iFrame].noteState < 3
+    //                && smoothedPitch[iFrame].size() > 0
+    //                && (iFrame >= nFrame-2
+    //                    || ((m_level[iFrame]/m_level[iFrame+2]) > 
+    //                     m_onsetSensitivity));
+    //     if (isVoiced && iFrame != nFrame-1)
+    //     {
+    //         if (oldIsVoiced == 0) // beginning of a note
+    //         {
+    //             onsetFrame = iFrame;
+    //         }
+    //         float pitch = smoothedPitch[iFrame][0].first;
+    //         notePitchTrack.push_back(pitch); // add to the note's pitch track
+    //     } else { // not currently voiced
+    //         if (oldIsVoiced == 1) // end of note
+    //         {
+    //             if (notePitchTrack.size() >= minNoteFrames)
+    //             {
+    //                 std::sort(notePitchTrack.begin(), notePitchTrack.end());
+    //                 float medianPitch = notePitchTrack[notePitchTrack.size()/2];
+    //                 float medianFreq = std::pow(2,(medianPitch - 69) / 12) * 440;
+    //                 f.values.clear();
+    //                 f.values.push_back(medianFreq);
+    //                 f.timestamp = m_timestamp[onsetFrame];
+    //                 f.duration = m_timestamp[iFrame] - m_timestamp[onsetFrame];
+    //                 fs[m_oNotes].push_back(f);
+    //             }
+    //             notePitchTrack.clear();
+    //         }
+    //     }
+    //     oldIsVoiced = isVoiced;
+    // }
     return fs;
-}
-
-float
-PYinVamp::pitchState2Freq(int state, vector<pair<double, double> > pitchProb)
-{
-    float hmmFreq = m_pitchHmm.m_freqs[state];
-    float bestFreq = 0;
-    float leastDist = 10000;
-    if (hmmFreq > 0)
-    {
-        // This was a Yin estimate, so try to get original pitch estimate back
-        // ... a bit hacky, since we could have direclty saved the frequency
-        // that was assigned to the HMM bin in hmm.calculateObsProb -- but would
-        // have had to rethink the interface of that method.
-        for (size_t iPt = 0; iPt < pitchProb.size(); ++iPt)
-        {
-            float freq = 440. * 
-                         std::pow(2, 
-                                  (pitchProb[iPt].first - 69)/12);
-            float dist = std::abs(hmmFreq-freq);
-            if (dist < leastDist)
-            {
-                leastDist = dist;
-                bestFreq = freq;
-            }
-        }
-    } else {
-        bestFreq = hmmFreq;
-    }
-    return bestFreq;
 }

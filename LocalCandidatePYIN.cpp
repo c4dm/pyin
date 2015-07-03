@@ -12,7 +12,7 @@
 */
 
 #include "LocalCandidatePYIN.h"
-#include "MonoPitch.h"
+#include "MonoPitchHMM.h"
 #include "YinUtil.h"
 
 #include "vamp-sdk/FFT.h"
@@ -345,7 +345,7 @@ LocalCandidatePYIN::getRemainingFeatures()
     }
 
     // MONO-PITCH STUFF
-    MonoPitch mp;
+    MonoPitchHMM hmm(0);
     size_t nFrame = m_timestamp.size();
     vector<vector<float> > pitchTracks;
     vector<float> freqSum = vector<float>(m_nCandidate);
@@ -359,11 +359,11 @@ LocalCandidatePYIN::getRemainingFeatures()
     for (size_t iCandidate = 0; iCandidate < m_nCandidate; ++iCandidate)
     {
         pitchTracks.push_back(vector<float>(nFrame));
-        vector<vector<pair<double,double> > > tempPitchProb;
+        vector<pair<double,double> > tempPitchProb;
+        vector<vector<double> > tempObsProb;
         float centrePitch = 45 + 3 * iCandidate;
 
         for (size_t iFrame = 0; iFrame < nFrame; ++iFrame) {
-            tempPitchProb.push_back(vector<pair<double,double> >());
             float sumProb = 0;
             float pitch = 0;
             float prob = 0;
@@ -374,16 +374,26 @@ LocalCandidatePYIN::getRemainingFeatures()
                     boost::math::pdf(normalDist, pitch-centrePitch) /
                     maxNormalDist * 2;
                 sumProb += prob;
-                tempPitchProb[iFrame].push_back(
+                tempPitchProb.push_back(
                     pair<double,double>(pitch,prob));
             }
             for (size_t iProb = 0; iProb < m_pitchProb[iFrame].size(); ++iProb)
             {
-                tempPitchProb[iFrame][iProb].second /= sumProb;
+                tempPitchProb[iProb].second /= sumProb;
             }
+            tempObsProb.push_back(hmm.calculateObsProb(tempPitchProb));
         }
 
-        vector<float> mpOut = mp.process(tempPitchProb);
+        vector<int> rawPitchPath = hmm.decodeViterbi(tempObsProb);
+        vector<float> mpOut;
+
+        for (size_t iFrame = 0; iFrame < rawPitchPath.size(); ++iFrame)
+        {
+            float freq = hmm.nearestFreq(rawPitchPath[iFrame], 
+                                                m_pitchProb[iFrame]);
+            mpOut.push_back(freq); // for note processing below
+        }
+
         float prevFreq = 0;
         for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
         {

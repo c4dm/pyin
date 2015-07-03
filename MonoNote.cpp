@@ -22,7 +22,7 @@ using std::vector;
 using std::pair;
 
 MonoNote::MonoNote() :
-    hmm()
+    hmm(0)
 {
 }
 

@@ -15,7 +15,6 @@ SOURCES := PYinVamp.cpp \
            Yin.cpp \
            YinUtil.cpp \
            MonoNote.cpp \
-           MonoPitch.cpp \
            MonoNoteParameters.cpp \
            SparseHMM.cpp \
            MonoNoteHMM.cpp \
@@ -65,15 +64,14 @@ depend:
 # DO NOT DELETE
 
 libmain.o: PYinVamp.h Yin.h MeanFilter.h YinVamp.h LocalCandidatePYIN.h
-LocalCandidatePYIN.o: LocalCandidatePYIN.h Yin.h MeanFilter.h MonoPitch.h
+LocalCandidatePYIN.o: LocalCandidatePYIN.h Yin.h MeanFilter.h
 LocalCandidatePYIN.o: MonoPitchHMM.h SparseHMM.h YinUtil.h
 MonoNote.o: MonoNote.h MonoNoteHMM.h MonoNoteParameters.h SparseHMM.h
 MonoNoteHMM.o: MonoNoteHMM.h MonoNoteParameters.h SparseHMM.h
 MonoNoteParameters.o: MonoNoteParameters.h
-MonoPitch.o: MonoPitch.h MonoPitchHMM.h SparseHMM.h
 MonoPitchHMM.o: MonoPitchHMM.h SparseHMM.h
 PYinVamp.o: PYinVamp.h Yin.h MeanFilter.h MonoNote.h MonoNoteHMM.h
-PYinVamp.o: MonoNoteParameters.h SparseHMM.h MonoPitch.h MonoPitchHMM.h
+PYinVamp.o: MonoNoteParameters.h SparseHMM.h MonoPitchHMM.h
 SparseHMM.o: SparseHMM.h
 Yin.o: Yin.h MeanFilter.h YinUtil.h
 YinUtil.o: YinUtil.h MeanFilter.h
@@ -90,7 +88,6 @@ test/TestYinUtil.o: YinUtil.h MeanFilter.h
 LocalCandidatePYIN.o: Yin.h MeanFilter.h
 MonoNote.o: MonoNoteHMM.h MonoNoteParameters.h SparseHMM.h
 MonoNoteHMM.o: MonoNoteParameters.h SparseHMM.h
-MonoPitch.o: MonoPitchHMM.h SparseHMM.h
 MonoPitchHMM.o: SparseHMM.h
 PYinVamp.o: Yin.h MeanFilter.h
 Yin.o: MeanFilter.h

@@ -26,10 +26,10 @@ using std::vector;
 class MonoPitchHMM : public SparseHMM
 {
 public:
-    MonoPitchHMM();
+    MonoPitchHMM(int fixedLag);
     const std::vector<double> calculateObsProb(const vector<pair<double, double> >);
-    // double getMidiPitch(size_t index);
-    // double getFrequency(size_t index);
+    const float nearestFreq(int state, vector<pair<double, double> > pitchProb);
+
     void build();
     double m_minFreq; // 82.40689f/2
     size_t m_nBPS;

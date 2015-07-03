@@ -56,8 +56,6 @@ public:
 
     FeatureSet getRemainingFeatures();
 
-    float pitchState2Freq(int state, vector<pair<double, double> > pitchProb);
-
 protected:
     size_t m_channels;
     size_t m_stepSize;
@@ -83,8 +81,8 @@ protected:
 
     MonoPitchHMM m_pitchHmm;
 
-    vector<vector<pair<double, double> > > m_pitchProb;
-    vector<Vamp::RealTime> m_timestamp;
+    deque<vector<pair<double, double> > > m_pitchProb;
+    deque<Vamp::RealTime> m_timestamp;
     vector<float> m_level;
 };
 

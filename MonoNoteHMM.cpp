@@ -21,7 +21,8 @@
 using std::vector;
 using std::pair;
 
-MonoNoteHMM::MonoNoteHMM() :
+MonoNoteHMM::MonoNoteHMM(int fixedLag) :
+    SparseHMM(fixedLag),
     par()
 {
     build();

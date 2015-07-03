@@ -19,7 +19,8 @@
 using std::vector;
 using std::pair;
 
-SparseHMM::SparseHMM() :
+SparseHMM::SparseHMM(int fixedLag) :
+    m_fixedLag(fixedLag),
     m_nState(0),
     m_nTrans(0),
     m_init(0),
@@ -61,7 +62,7 @@ SparseHMM::decodeViterbi(std::vector<vector<double> > obsProb)
         process(obsProb[iFrame]);
     }
 
-    vector<int> path = finalise();
+    vector<int> path = track();
     return(path);
 }
 
@@ -153,11 +154,20 @@ SparseHMM::process(vector<double> newObs)
         }
         m_scale.push_back(1.0);
     }
+
+    if (m_fixedLag > 0 && m_psi.size() > m_fixedLag)
+    {
+        m_psi.pop_front();
+        m_scale.pop_front();
+    }
+
+    // std::cerr << m_fixedLag << " " << m_psi.size() << std::endl;
+
     return 0;
 }
 
-vector<int> 
-SparseHMM::finalise()
+const vector<int>
+SparseHMM::track()
 {
     // initialise backward step
     size_t nFrame = m_psi.size();
