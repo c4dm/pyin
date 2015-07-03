@@ -17,6 +17,7 @@
 #include <vamp-sdk/Plugin.h>
 
 #include "Yin.h"
+#include "MonoPitchHMM.h"
 
 class PYinVamp : public Vamp::Plugin
 {
@@ -55,6 +56,8 @@ public:
 
     FeatureSet getRemainingFeatures();
 
+    float pitchState2Freq(int state, vector<pair<double, double> > pitchProb);
+
 protected:
     size_t m_channels;
     size_t m_stepSize;
@@ -77,6 +80,9 @@ protected:
     float m_lowAmp;
     float m_onsetSensitivity;
     float m_pruneThresh;
+
+    MonoPitchHMM m_pitchHmm;
+
     vector<vector<pair<double, double> > > m_pitchProb;
     vector<Vamp::RealTime> m_timestamp;
     vector<float> m_level;

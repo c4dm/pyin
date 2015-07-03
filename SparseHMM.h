@@ -30,6 +30,7 @@ public:
                            calculateObsProb(const vector<pair<double, double> >);
     virtual void           build();
     const std::vector<int> decodeViterbi(std::vector<vector<double> > obs);
+    void                   reset();
     void                   initialise(vector<double> firstObs);
     int                    process(vector<double> newObs);
     vector<int>            finalise();

@@ -14,6 +14,7 @@
 #include "PYinVamp.h"
 #include "MonoNote.h"
 #include "MonoPitch.h"
+#include "MonoPitchHMM.h"
 
 #include "vamp-sdk/FFT.h"
 
@@ -50,6 +51,7 @@ PYinVamp::PYinVamp(float inputSampleRate) :
     m_lowAmp(0.1f),
     m_onsetSensitivity(0.7f),
     m_pruneThresh(0.1f),
+    m_pitchHmm(),
     m_pitchProb(0),
     m_timestamp(0),
     m_level(0)
@@ -493,6 +495,13 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
 
     if (m_fixedLag == 0.f)
     {
+        vector<double> tempObsProb = m_pitchHmm.calculateObsProb(tempPitchProb);
+        if (m_timestamp.empty())
+        {
+            m_pitchHmm.initialise(tempObsProb);
+        } else {
+            m_pitchHmm.process(tempObsProb);
+        }
         m_pitchProb.push_back(tempPitchProb);
     } else {
         // Damn, so I need the hmm right here! Sadly it isn't defined here yet.
@@ -549,26 +558,46 @@ PYinVamp::getRemainingFeatures()
         return fs;
     }
 
-    // MONO-PITCH STUFF
-    MonoPitch mp;
-    vector<float> mpOut = mp.process(m_pitchProb);
-    for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame)
+    // ================== P I T C H  T R A C K =================================
+
+    vector<int> rawPitchPath = m_pitchHmm.finalise();
+    vector<float> mpOut; 
+    
+    for (size_t iFrame = 0; iFrame < rawPitchPath.size(); ++iFrame)
     {
-        if (mpOut[iFrame] < 0 && (m_outputUnvoiced==0)) continue;
+        float freq = pitchState2Freq(rawPitchPath[iFrame], m_pitchProb[iFrame]);
+        mpOut.push_back(freq); // for note processing below
+        
         f.timestamp = m_timestamp[iFrame];
+        // std::cerr << f.timestamp << std::endl;
         f.values.clear();
+
+        // different output modes
+        if (freq < 0 && (m_outputUnvoiced==0)) continue;
         if (m_outputUnvoiced == 1)
         {
-            f.values.push_back(fabs(mpOut[iFrame]));
+            f.values.push_back(fabs(freq));
         } else {
-            f.values.push_back(mpOut[iFrame]);
+            f.values.push_back(freq);
         }
-        
         fs[m_oSmoothedPitchTrack].push_back(f);
     }
+
+    // for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame)
+    // {
+    //     if (mpOut[iFrame] < 0 && (m_outputUnvoiced==0)) continue;
+
+    //     if (m_outputUnvoiced == 1)
+    //     {
+    //         f.values.push_back(fabs(mpOut[iFrame]));
+    //     } else {
+    //         f.values.push_back(mpOut[iFrame]);
+    //     }
+        
+    //     fs[m_oSmoothedPitchTrack].push_back(f);
+    // }
     
-    // MONO-NOTE STUFF
-//    std::cerr << "Mono Note Stuff" << std::endl;
+    // ======================== N O T E S ======================================
     MonoNote mn;
     std::vector<std::vector<std::pair<double, double> > > smoothedPitch;
     for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame) {
@@ -633,4 +662,34 @@ PYinVamp::getRemainingFeatures()
         oldIsVoiced = isVoiced;
     }
     return fs;
+}
+
+float
+PYinVamp::pitchState2Freq(int state, vector<pair<double, double> > pitchProb)
+{
+    float hmmFreq = m_pitchHmm.m_freqs[state];
+    float bestFreq = 0;
+    float leastDist = 10000;
+    if (hmmFreq > 0)
+    {
+        // This was a Yin estimate, so try to get original pitch estimate back
+        // ... a bit hacky, since we could have direclty saved the frequency
+        // that was assigned to the HMM bin in hmm.calculateObsProb -- but would
+        // have had to rethink the interface of that method.
+        for (size_t iPt = 0; iPt < pitchProb.size(); ++iPt)
+        {
+            float freq = 440. * 
+                         std::pow(2, 
+                                  (pitchProb[iPt].first - 69)/12);
+            float dist = std::abs(hmmFreq-freq);
+            if (dist < leastDist)
+            {
+                leastDist = dist;
+                bestFreq = freq;
+            }
+        }
+    } else {
+        bestFreq = hmmFreq;
+    }
+    return bestFreq;
 }

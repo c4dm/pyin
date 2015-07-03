@@ -52,8 +52,7 @@ SparseHMM::decodeViterbi(std::vector<vector<double> > obsProb)
     if (nFrame < 1) {
         return vector<int>();
     }
-    
-    
+
     initialise(obsProb[0]);
 
     // rest of forward step
@@ -66,10 +65,20 @@ SparseHMM::decodeViterbi(std::vector<vector<double> > obsProb)
     return(path);
 }
 
+void
+SparseHMM::reset()
+{
+    m_scale.clear();
+    m_psi.clear();
+    for (size_t i = 0; i < m_delta.size(); ++i) m_delta[i] = 0;
+    for (size_t i = 0; i < m_oldDelta.size(); ++i) m_oldDelta[i] = 0;
+}
 
 void
 SparseHMM::initialise(vector<double> firstObs)
 {
+    reset();
+
     double deltasum = 0;
 
     // initialise first frame
