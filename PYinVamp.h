@@ -71,6 +71,7 @@ protected:
     mutable int m_oNotes;
 
     float m_threshDistr;
+    float m_fixedLag;
     float m_outputUnvoiced;
     float m_preciseTime;
     float m_lowAmp;

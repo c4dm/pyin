@@ -107,6 +107,8 @@ MonoNoteHMM::build()
     //    3. attack state
     //    ...
     
+    m_nState = par.n;
+
     // observation distributions
     for (size_t iState = 0; iState < par.n; ++iState)
     {
@@ -114,9 +116,9 @@ MonoNoteHMM::build()
         if (iState % par.nSPP == 2)
         {
             // silent state starts tracking
-            init.push_back(1.0/(par.nS * par.nPPS));
+            m_init.push_back(1.0/(par.nS * par.nPPS));
         } else {
-            init.push_back(0.0);            
+            m_init.push_back(0.0);            
         }
     }
 
@@ -137,27 +139,27 @@ MonoNoteHMM::build()
         size_t index = iPitch * par.nSPP;
 
         // transitions from attack state
-        from.push_back(index);
-        to.push_back(index);
-        transProb.push_back(par.pAttackSelftrans);
+        m_from.push_back(index);
+        m_to.push_back(index);
+        m_transProb.push_back(par.pAttackSelftrans);
 
-        from.push_back(index);
-        to.push_back(index+1);
-        transProb.push_back(1-par.pAttackSelftrans);
+        m_from.push_back(index);
+        m_to.push_back(index+1);
+        m_transProb.push_back(1-par.pAttackSelftrans);
 
         // transitions from stable state
-        from.push_back(index+1);
-        to.push_back(index+1); // to itself
-        transProb.push_back(par.pStableSelftrans);
+        m_from.push_back(index+1);
+        m_to.push_back(index+1); // to itself
+        m_transProb.push_back(par.pStableSelftrans);
         
-        from.push_back(index+1);
-        to.push_back(index+2); // to silent
-        transProb.push_back(par.pStable2Silent);
+        m_from.push_back(index+1);
+        m_to.push_back(index+2); // to silent
+        m_transProb.push_back(par.pStable2Silent);
 
         // the "easy" transitions from silent state
-        from.push_back(index+2);
-        to.push_back(index+2);
-        transProb.push_back(par.pSilentSelftrans);
+        m_from.push_back(index+2);
+        m_to.push_back(index+2);
+        m_transProb.push_back(par.pSilentSelftrans);
         
         
         // the more complicated transitions from the silent
@@ -184,15 +186,18 @@ MonoNoteHMM::build()
 
                 tempTransProbSilent.push_back(tempWeightSilent);
 
-                from.push_back(index+2);
-                to.push_back(toIndex);
+                m_from.push_back(index+2);
+                m_to.push_back(toIndex);
             }
         }
         for (size_t i = 0; i < tempTransProbSilent.size(); ++i)
         {
-            transProb.push_back((1-par.pSilentSelftrans) * tempTransProbSilent[i]/probSumSilent);
+            m_transProb.push_back((1-par.pSilentSelftrans) * tempTransProbSilent[i]/probSumSilent);
         }
     }
+    m_nTrans = m_transProb.size();
+    m_delta = vector<double>(m_nState);
+    m_oldDelta = vector<double>(m_nState);
 }
 
 double

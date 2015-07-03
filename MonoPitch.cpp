@@ -40,13 +40,11 @@ MonoPitch::process(const vector<vector<pair<double, double> > > pitchProb)
     {
         obsProb.push_back(hmm.calculateObsProb(pitchProb[iFrame]));
     }
-    
-    vector<double> *scale = new vector<double>(0);
-    
+        
     vector<float> out; 
     
     // std::cerr << "before Viterbi decoding" << obsProb.size() << "ng" << obsProb[1].size() << std::endl;
-    vector<int> path = hmm.decodeViterbi(obsProb, scale);
+    vector<int> path = hmm.decodeViterbi(obsProb);
     // std::cerr << "after Viterbi decoding" << std::endl;
     
     for (size_t iFrame = 0; iFrame < path.size(); ++iFrame)
@@ -76,6 +74,5 @@ MonoPitch::process(const vector<vector<pair<double, double> > > pitchProb)
         }
         out.push_back(bestFreq);
     }
-    delete scale;
     return(out);
 }

@@ -44,6 +44,7 @@ PYinVamp::PYinVamp(float inputSampleRate) :
     m_oSmoothedPitchTrack(0),
     m_oNotes(0),
     m_threshDistr(2.0f),
+    m_fixedLag(0.0f),
     m_outputUnvoiced(0.0f),
     m_preciseTime(0.0f),
     m_lowAmp(0.1f),
@@ -153,6 +154,19 @@ PYinVamp::getParameterDescriptors() const
     d.valueNames.push_back("Single Value 0.20");
     list.push_back(d);
 
+    d.valueNames.clear();
+
+    d.identifier = "fixedlag";
+    d.name = "Fixed-lag smoothing";
+    d.description = "Use fixed lag smoothing, not full Viterbi smoothing.";
+    d.unit = "";
+    d.minValue = 0.0f;
+    d.maxValue = 1.0f;
+    d.defaultValue = 0.0f;
+    d.isQuantized = true;
+    d.quantizeStep = 1.0f;
+    list.push_back(d);
+
     d.identifier = "outputunvoiced";
     d.valueNames.clear();
     d.name = "Output estimates classified as unvoiced?";
@@ -222,6 +236,9 @@ PYinVamp::getParameter(string identifier) const
     if (identifier == "threshdistr") {
             return m_threshDistr;
     }
+    if (identifier == "fixedlag") {
+            return m_fixedLag;
+    }
     if (identifier == "outputunvoiced") {
             return m_outputUnvoiced;
     }
@@ -246,6 +263,10 @@ PYinVamp::setParameter(string identifier, float value)
     if (identifier == "threshdistr")
     {
         m_threshDistr = value;
+    }
+    if (identifier == "fixedlag")
+    {
+        m_fixedLag = value;
     }
     if (identifier == "outputunvoiced")
     {
@@ -455,8 +476,6 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
 
     m_level.push_back(yo.rms);
 
-    // First, get the things out of the way that we don't want to output 
-    // immediately, but instead save for later.
     vector<pair<double, double> > tempPitchProb;
     for (size_t iCandidate = 0; iCandidate < yo.freqProb.size(); ++iCandidate)
     {
@@ -471,7 +490,14 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
                 (tempPitch, yo.freqProb[iCandidate].second*factor));
         }
     }
-    m_pitchProb.push_back(tempPitchProb);
+
+    if (m_fixedLag == 0.f)
+    {
+        m_pitchProb.push_back(tempPitchProb);
+    } else {
+        // Damn, so I need the hmm right here! Sadly it isn't defined here yet.
+        // Perhaps I could re-design the whole shabang 
+    }
     m_timestamp.push_back(timestamp);
 
     // F0 CANDIDATES
@@ -549,7 +575,8 @@ PYinVamp::getRemainingFeatures()
         std::vector<std::pair<double, double> > temp;
         if (mpOut[iFrame] > 0)
         {
-            double tempPitch = 12 * std::log(mpOut[iFrame]/440)/std::log(2.) + 69;
+            double tempPitch = 12 * 
+                               std::log(mpOut[iFrame]/440)/std::log(2.) + 69;
             temp.push_back(std::pair<double,double>(tempPitch, .9));
         }
         smoothedPitch.push_back(temp);
@@ -569,14 +596,15 @@ PYinVamp::getRemainingFeatures()
 
     float minNoteFrames = (m_inputSampleRate*m_pruneThresh) / m_stepSize;
     
+    // the body of the loop below should be in a function/method
     std::vector<float> notePitchTrack; // collects pitches for one note at a time
     for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
     {
         isVoiced = mnOut[iFrame].noteState < 3
                    && smoothedPitch[iFrame].size() > 0
                    && (iFrame >= nFrame-2
-                       || ((m_level[iFrame]/m_level[iFrame+2]) > m_onsetSensitivity));
-        // std::cerr << m_level[iFrame]/m_level[iFrame-1] << " " << isVoiced << std::endl;
+                       || ((m_level[iFrame]/m_level[iFrame+2]) > 
+                        m_onsetSensitivity));
         if (isVoiced && iFrame != nFrame-1)
         {
             if (oldIsVoiced == 0) // beginning of a note
@@ -588,7 +616,6 @@ PYinVamp::getRemainingFeatures()
         } else { // not currently voiced
             if (oldIsVoiced == 1) // end of note
             {
-                // std::cerr << notePitchTrack.size() << " " << minNoteFrames << std::endl;
                 if (notePitchTrack.size() >= minNoteFrames)
                 {
                     std::sort(notePitchTrack.begin(), notePitchTrack.end());

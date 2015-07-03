@@ -17,11 +17,13 @@
 
 #include <cstdio>
 #include <cmath>
+#include <iostream>
 
 using std::vector;
 using std::pair;
 
 MonoPitchHMM::MonoPitchHMM() :
+SparseHMM(),
 m_minFreq(61.735),
 m_nBPS(5),
 m_nPitch(0),
@@ -32,6 +34,7 @@ m_freqs(0)
 {
     m_transitionWidth = 5*(m_nBPS/2) + 1;
     m_nPitch = 69 * m_nBPS;
+    m_nState = 2 * m_nPitch; // voiced and unvoiced
     m_freqs = vector<double>(2*m_nPitch);
     for (size_t iPitch = 0; iPitch < m_nPitch; ++iPitch)
     {
@@ -83,7 +86,7 @@ void
 MonoPitchHMM::build()
 {
     // INITIAL VECTOR
-    init = vector<double>(2*m_nPitch, 1.0 / 2*m_nPitch);
+    m_init = vector<double>(2*m_nPitch, 1.0 / 2*m_nPitch);
     
     // TRANSITIONS
     for (size_t iPitch = 0; iPitch < m_nPitch; ++iPitch)
@@ -112,22 +115,22 @@ MonoPitchHMM::build()
         // TRANSITIONS TO CLOSE PITCH
         for (size_t i = minNextPitch; i <= maxNextPitch; ++i)
         {
-            from.push_back(iPitch);
-            to.push_back(i);
-            transProb.push_back(weights[i-minNextPitch] / weightSum * m_selfTrans);
+            m_from.push_back(iPitch);
+            m_to.push_back(i);
+            m_transProb.push_back(weights[i-minNextPitch] / weightSum * m_selfTrans);
 
-            from.push_back(iPitch);
-            to.push_back(i+m_nPitch);
-            transProb.push_back(weights[i-minNextPitch] / weightSum * (1-m_selfTrans));
+            m_from.push_back(iPitch);
+            m_to.push_back(i+m_nPitch);
+            m_transProb.push_back(weights[i-minNextPitch] / weightSum * (1-m_selfTrans));
 
-            from.push_back(iPitch+m_nPitch);
-            to.push_back(i+m_nPitch);
-            transProb.push_back(weights[i-minNextPitch] / weightSum * m_selfTrans);
+            m_from.push_back(iPitch+m_nPitch);
+            m_to.push_back(i+m_nPitch);
+            m_transProb.push_back(weights[i-minNextPitch] / weightSum * m_selfTrans);
             // transProb.push_back(weights[i-minNextPitch] / weightSum * 0.5);
             
-            from.push_back(iPitch+m_nPitch);
-            to.push_back(i);
-            transProb.push_back(weights[i-minNextPitch] / weightSum * (1-m_selfTrans));
+            m_from.push_back(iPitch+m_nPitch);
+            m_to.push_back(i);
+            m_transProb.push_back(weights[i-minNextPitch] / weightSum * (1-m_selfTrans));
             // transProb.push_back(weights[i-minNextPitch] / weightSum * 0.5);
         }
 
@@ -149,5 +152,7 @@ MonoPitchHMM::build()
     // for (size_t i = 0; i < from.size(); ++i) {
     //     std::cerr << "P(["<< from[i] << " --> " << to[i] << "]) = " << transProb[i] << std::endl;
     // }
-    
+    m_nTrans = m_transProb.size();
+    m_delta = vector<double>(m_nState);
+    m_oldDelta = vector<double>(m_nState);
 }
