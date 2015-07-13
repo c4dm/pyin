@@ -52,7 +52,6 @@ MonoNote::process(const vector<vector<pair<double, double> > > pitchProb)
         stateKind = (path[iFrame]) % hmm.par.nSPP + 1;
 
         out.push_back(FrameOutput(iFrame, currPitch, stateKind));
-        // std::cerr << path[iFrame] << " -- "<< pitchProb[iFrame][0].first << " -- "<< currPitch << " -- " << stateKind << std::endl;
     }
     return(out);
 }

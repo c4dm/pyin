@@ -84,6 +84,11 @@ protected:
     deque<vector<pair<double, double> > > m_pitchProb;
     deque<Vamp::RealTime> m_timestamp;
     vector<float> m_level;
+    vector<float> m_pitchTrack;
+
+    // for note writing
+    // vector<float> m_notePitchTrack; // contains pitches of one current note
+    // bool m_oldIsVoiced;
 };
 
 #endif

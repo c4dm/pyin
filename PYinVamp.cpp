@@ -53,7 +53,8 @@ PYinVamp::PYinVamp(float inputSampleRate) :
     m_pitchHmm(0),
     m_pitchProb(0),
     m_timestamp(0),
-    m_level(0)
+    m_level(0),
+    m_pitchTrack(0)
 {
 }
 
@@ -448,6 +449,7 @@ PYinVamp::reset()
     m_pitchProb.clear();
     m_timestamp.clear();
     m_level.clear();
+    m_pitchTrack.clear();
 /*    
     std::cerr << "PYinVamp::reset"
           << ", blockSize = " << m_blockSize
@@ -458,8 +460,10 @@ PYinVamp::reset()
 PYinVamp::FeatureSet
 PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
 {
+    std::cerr << timestamp << std::endl;
     int offset = m_preciseTime == 1.0 ? m_blockSize/2 : m_blockSize/4;
-    timestamp = timestamp + Vamp::RealTime::frame2RealTime(offset, lrintf(m_inputSampleRate));
+    timestamp = timestamp + Vamp::RealTime::frame2RealTime(offset, 
+        lrintf(m_inputSampleRate));
 
     FeatureSet fs;
     
@@ -508,7 +512,7 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
 
     int lag = m_pitchHmm.m_fixedLag;
 
-    if (m_fixedLag == 1.f)
+    if (m_fixedLag == 1.f) // do fixed-lag smoothing instead of full Viterbi
     {
         if (m_timestamp.size() == lag + 1)
         {
@@ -520,6 +524,7 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
             vector<int> rawPitchPath = m_pitchHmm.track();
             float freq = m_pitchHmm.nearestFreq(rawPitchPath[0], 
                                                 m_pitchProb[0]);
+            m_pitchTrack.push_back(freq);
             f.timestamp = m_timestamp[0];
             f.values.clear();
 
@@ -592,14 +597,13 @@ PYinVamp::getRemainingFeatures()
     // ================== P I T C H  T R A C K =================================
 
     vector<int> rawPitchPath = m_pitchHmm.track();
-    vector<float> mpOut; 
     
     for (size_t iFrame = 0; iFrame < rawPitchPath.size(); ++iFrame)
     {
         float freq = m_pitchHmm.nearestFreq(rawPitchPath[iFrame], 
                                             m_pitchProb[iFrame]);
-        mpOut.push_back(freq); // for note processing below
-        
+        m_pitchTrack.push_back(freq); // for note processing below
+
         f.timestamp = m_timestamp[iFrame];
         f.values.clear();
 
@@ -615,68 +619,90 @@ PYinVamp::getRemainingFeatures()
     }
     
     // ======================== N O T E S ======================================
-    // MonoNote mn;
-    // std::vector<std::vector<std::pair<double, double> > > smoothedPitch;
-    // for (size_t iFrame = 0; iFrame < mpOut.size(); ++iFrame) {
-    //     std::vector<std::pair<double, double> > temp;
-    //     if (mpOut[iFrame] > 0)
-    //     {
-    //         double tempPitch = 12 * 
-    //                            std::log(mpOut[iFrame]/440)/std::log(2.) + 69;
-    //         temp.push_back(std::pair<double,double>(tempPitch, .9));
-    //     }
-    //     smoothedPitch.push_back(temp);
-    // }
-    // // vector<MonoNote::FrameOutput> mnOut = mn.process(m_pitchProb);
-    // vector<MonoNote::FrameOutput> mnOut = mn.process(smoothedPitch);
-    
-    // // turning feature into a note feature
-    // f.hasTimestamp = true;
-    // f.hasDuration = true;
-    // f.values.clear();
-        
-    // int onsetFrame = 0;
-    // bool isVoiced = 0;
-    // bool oldIsVoiced = 0;
-    // size_t nFrame = m_pitchProb.size();
+    MonoNote mn;
+    std::vector<std::vector<std::pair<double, double> > > smoothedPitch;
+    for (size_t iFrame = 0; iFrame < m_pitchTrack.size(); ++iFrame) {
+        std::vector<std::pair<double, double> > temp;
+        if (m_pitchTrack[iFrame] > 0)
+        {
+            double tempPitch = 12 * 
+                std::log(m_pitchTrack[iFrame]/440)/std::log(2.) + 69;
+            temp.push_back(std::pair<double,double>(tempPitch, .9));
+            // std::cerr << "tempPitch: " << tempPitch << std::endl;
+        }
+        // std::cerr << "temp size: " << temp.size() << std::endl;
+        smoothedPitch.push_back(temp);
+    }
 
-    // float minNoteFrames = (m_inputSampleRate*m_pruneThresh) / m_stepSize;
+    vector<MonoNote::FrameOutput> mnOut = mn.process(smoothedPitch);
+    std::cerr << "mnOut size: " << mnOut.size() << std::endl;
+    std::cerr << "m_pitchTrack size: " << m_pitchTrack.size() << std::endl;
     
-    // // the body of the loop below should be in a function/method
-    // std::vector<float> notePitchTrack; // collects pitches for one note at a time
-    // for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
-    // {
-    //     isVoiced = mnOut[iFrame].noteState < 3
-    //                && smoothedPitch[iFrame].size() > 0
-    //                && (iFrame >= nFrame-2
-    //                    || ((m_level[iFrame]/m_level[iFrame+2]) > 
-    //                     m_onsetSensitivity));
-    //     if (isVoiced && iFrame != nFrame-1)
-    //     {
-    //         if (oldIsVoiced == 0) // beginning of a note
-    //         {
-    //             onsetFrame = iFrame;
-    //         }
-    //         float pitch = smoothedPitch[iFrame][0].first;
-    //         notePitchTrack.push_back(pitch); // add to the note's pitch track
-    //     } else { // not currently voiced
-    //         if (oldIsVoiced == 1) // end of note
-    //         {
-    //             if (notePitchTrack.size() >= minNoteFrames)
-    //             {
-    //                 std::sort(notePitchTrack.begin(), notePitchTrack.end());
-    //                 float medianPitch = notePitchTrack[notePitchTrack.size()/2];
-    //                 float medianFreq = std::pow(2,(medianPitch - 69) / 12) * 440;
-    //                 f.values.clear();
-    //                 f.values.push_back(medianFreq);
-    //                 f.timestamp = m_timestamp[onsetFrame];
-    //                 f.duration = m_timestamp[iFrame] - m_timestamp[onsetFrame];
-    //                 fs[m_oNotes].push_back(f);
-    //             }
-    //             notePitchTrack.clear();
-    //         }
-    //     }
-    //     oldIsVoiced = isVoiced;
-    // }
+    // turning feature into a note feature
+    f.hasTimestamp = true;
+    f.hasDuration = true;
+    f.values.clear();
+        
+    int onsetFrame = 0;
+    bool isVoiced = 0;
+    bool oldIsVoiced = 0;
+    size_t nFrame = m_pitchTrack.size();
+
+    float minNoteFrames = (m_inputSampleRate*m_pruneThresh) / m_stepSize;
+    
+    // the body of the loop below should be in a function/method
+    // but what does it actually do??
+    // * takes the result of the note tracking HMM
+    // * collects contiguously pitched pitches
+    // * writes a note once it notices the voiced segment has ended
+    // complications:
+    // * it needs a lookahead of two frames for m_level (wtf was I thinking)
+    // * it needs to know the timestamp (which can be guessed from the frame no)
+    // * 
+    int offset = m_preciseTime == 1.0 ? m_blockSize/2 : m_blockSize/4;
+    RealTime timestampOffset = Vamp::RealTime::frame2RealTime(offset, 
+        lrintf(m_inputSampleRate));
+
+    std::vector<float> notePitchTrack; // collects pitches for 1 note at a time
+    for (size_t iFrame = 0; iFrame < nFrame; ++iFrame)
+    {
+        isVoiced = mnOut[iFrame].noteState < 3 
+            && smoothedPitch[iFrame].size() > 0 
+            && (iFrame >= nFrame-2
+                || ((m_level[iFrame]/m_level[iFrame+2]) > m_onsetSensitivity));
+        if (isVoiced && iFrame != nFrame-1)
+        {
+            if (oldIsVoiced == 0) // beginning of a note
+            {
+                onsetFrame = iFrame;
+            }
+            float pitch = smoothedPitch[iFrame][0].first;
+            notePitchTrack.push_back(pitch); // add to the note's pitch track
+        } else { // not currently voiced
+            if (oldIsVoiced == 1) // end of note
+            {
+                if (notePitchTrack.size() >= minNoteFrames)
+                {
+                    std::sort(notePitchTrack.begin(), notePitchTrack.end());
+                    float medianPitch = notePitchTrack[notePitchTrack.size()/2];
+                    float medianFreq = 
+                        std::pow(2,(medianPitch - 69) / 12) * 440;
+                    f.values.clear();
+                    f.values.push_back(medianFreq);
+                    RealTime start = RealTime::frame2RealTime(
+                        onsetFrame * m_stepSize, lrintf(m_inputSampleRate)) + 
+                        timestampOffset;
+                    RealTime end   = RealTime::frame2RealTime(
+                            iFrame * m_stepSize, lrintf(m_inputSampleRate)) + 
+                        timestampOffset;
+                    f.timestamp = start;
+                    f.duration = end - start;
+                    fs[m_oNotes].push_back(f);
+                }
+                notePitchTrack.clear();
+            }
+        }
+        oldIsVoiced = isVoiced;
+    }
     return fs;
 }

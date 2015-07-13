@@ -37,14 +37,13 @@ MonoNoteHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
     
     // what is the probability of pitched
     double pIsPitched = 0;
-    for (size_t iCandidate = 0; iCandidate < nCandidate; ++iCandidate)
+    for (size_t iCand = 0; iCand < nCandidate; ++iCand)
     {
-        // pIsPitched = pitchProb[iCandidate].second > pIsPitched ? pitchProb[iCandidate].second : pIsPitched;
-        pIsPitched += pitchProb[iCandidate].second;
+        pIsPitched += pitchProb[iCand].second;
     }
 
-    // pIsPitched = std::pow(pIsPitched, (1-par.priorWeight)) * std::pow(par.priorPitchedProb, par.priorWeight);
-    pIsPitched = pIsPitched * (1-par.priorWeight) + par.priorPitchedProb * par.priorWeight;
+    pIsPitched = pIsPitched * (1-par.priorWeight) + 
+                     par.priorPitchedProb * par.priorWeight;
 
     vector<double> out = vector<double>(par.n);
     double tempProbSum = 0;
@@ -59,14 +58,15 @@ MonoNoteHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
                 double minDist = 10000.0;
                 double minDistProb = 0;
                 size_t minDistCandidate = 0;
-                for (size_t iCandidate = 0; iCandidate < nCandidate; ++iCandidate)
+                for (size_t iCand = 0; iCand < nCandidate; ++iCand)
                 {
-                    double currDist = std::abs(getMidiPitch(i)-pitchProb[iCandidate].first);
+                    double currDist = std::abs(getMidiPitch(i)-
+                                               pitchProb[iCand].first);
                     if (currDist < minDist)
                     {
                         minDist = currDist;
-                        minDistProb = pitchProb[iCandidate].second;
-                        minDistCandidate = iCandidate;
+                        minDistProb = pitchProb[iCand].second;
+                        minDistCandidate = iCand;
                     }
                 }
                 tempProb = std::pow(minDistProb, par.yinTrust) * 
@@ -174,7 +174,7 @@ MonoNoteHMM::build()
             double semitoneDistance = 
                 std::abs(fromPitch - toPitch) * 1.0 / par.nPPS;
             
-            // if (std::fmod(semitoneDistance, 1) == 0 && semitoneDistance > par.minSemitoneDistance)
+
             if (semitoneDistance == 0 || 
                 (semitoneDistance > par.minSemitoneDistance 
                  && semitoneDistance < par.maxJump))
@@ -193,7 +193,8 @@ MonoNoteHMM::build()
         }
         for (size_t i = 0; i < tempTransProbSilent.size(); ++i)
         {
-            m_transProb.push_back((1-par.pSilentSelftrans) * tempTransProbSilent[i]/probSumSilent);
+            m_transProb.push_back((1-par.pSilentSelftrans) * 
+                                  tempTransProbSilent[i]/probSumSilent);
         }
     }
     m_nTrans = m_transProb.size();
