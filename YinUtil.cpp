@@ -38,7 +38,7 @@ YinUtil::slowDifference(const double *in, double *yinBuffer)
     double delta ;
     int startPoint = 0;
     int endPoint = 0;
-    for (int i = 1; i < m_yinBufferSize; ++i) {
+    for (int i = 1; i < int(m_yinBufferSize); ++i) {
         yinBuffer[i] = 0;
         startPoint = m_yinBufferSize/2 - i/2;
         endPoint = startPoint + m_yinBufferSize;
@@ -52,21 +52,18 @@ YinUtil::slowDifference(const double *in, double *yinBuffer)
 void 
 YinUtil::fastDifference(const double *in, double *yinBuffer) 
 {
-    
     // DECLARE AND INITIALISE
     // initialisation of most of the arrays here was done in a separate function,
     // with all the arrays as members of the class... moved them back here.
     
     size_t frameSize = 2 * m_yinBufferSize;
-    
-    double *audioTransformedReal = new double[frameSize];
-    double *audioTransformedImag = new double[frameSize];
-    double *nullImag = new double[frameSize];
+    size_t halfSize = m_yinBufferSize;
+
+    double *audioTransformedComplex = new double[frameSize + 2];
+    double *audioOutReal = new double[frameSize];
     double *kernel = new double[frameSize];
-    double *kernelTransformedReal = new double[frameSize];
-    double *kernelTransformedImag = new double[frameSize];
-    double *yinStyleACFReal = new double[frameSize];
-    double *yinStyleACFImag = new double[frameSize];
+    double *kernelTransformedComplex = new double[frameSize + 2];
+    double *yinStyleACFComplex = new double[frameSize + 2];
     double *powerTerms = new double[m_yinBufferSize];
     
     for (size_t j = 0; j < m_yinBufferSize; ++j)
@@ -77,14 +74,7 @@ YinUtil::fastDifference(const double *in, double *yinBuffer)
     
     for (size_t j = 0; j < frameSize; ++j)
     {
-        nullImag[j] = 0.;
-        audioTransformedReal[j] = 0.;
-        audioTransformedImag[j] = 0.;
         kernel[j] = 0.;
-        kernelTransformedReal[j] = 0.;
-        kernelTransformedImag[j] = 0.;
-        yinStyleACFReal[j] = 0.;
-        yinStyleACFImag[j] = 0.;
     }
     
     // POWER TERM CALCULATION
@@ -96,42 +86,47 @@ YinUtil::fastDifference(const double *in, double *yinBuffer)
 
     // now iteratively calculate all others (saves a few multiplications)
     for (size_t tau = 1; tau < m_yinBufferSize; ++tau) {
-        powerTerms[tau] = powerTerms[tau-1] - in[tau-1] * in[tau-1] + in[tau+m_yinBufferSize] * in[tau+m_yinBufferSize];  
+        powerTerms[tau] = powerTerms[tau-1] -
+            in[tau-1] * in[tau-1] +
+            in[tau+m_yinBufferSize] * in[tau+m_yinBufferSize];  
     }
 
     // YIN-STYLE AUTOCORRELATION via FFT
     // 1. data
-    Vamp::FFT::forward(frameSize, in, nullImag, audioTransformedReal, audioTransformedImag);
+    m_fft.forward(in, audioTransformedComplex);
     
     // 2. half of the data, disguised as a convolution kernel
     for (size_t j = 0; j < m_yinBufferSize; ++j) {
         kernel[j] = in[m_yinBufferSize-1-j];
     }
-    Vamp::FFT::forward(frameSize, kernel, nullImag, kernelTransformedReal, kernelTransformedImag);
+    m_fft.forward(kernel, kernelTransformedComplex);
 
     // 3. convolution via complex multiplication -- written into
-    for (size_t j = 0; j < frameSize; ++j) {
-        yinStyleACFReal[j] = audioTransformedReal[j]*kernelTransformedReal[j] - audioTransformedImag[j]*kernelTransformedImag[j]; // real
-        yinStyleACFImag[j] = audioTransformedReal[j]*kernelTransformedImag[j] + audioTransformedImag[j]*kernelTransformedReal[j]; // imaginary
+    for (size_t j = 0; j <= halfSize; ++j) {
+        yinStyleACFComplex[j*2] = // real
+            audioTransformedComplex[j*2] * kernelTransformedComplex[j*2] -
+            audioTransformedComplex[j*2+1] * kernelTransformedComplex[j*2+1];
+        yinStyleACFComplex[j*2+1] = // imaginary
+            audioTransformedComplex[j*2] * kernelTransformedComplex[j*2+1] +
+            audioTransformedComplex[j*2+1] * kernelTransformedComplex[j*2];
     }
-    Vamp::FFT::inverse(frameSize, yinStyleACFReal, yinStyleACFImag, audioTransformedReal, audioTransformedImag);
+
+    m_fft.inverse(yinStyleACFComplex, audioOutReal);
     
     // CALCULATION OF difference function
     // ... according to (7) in the Yin paper.
     for (size_t j = 0; j < m_yinBufferSize; ++j) {
-        // taking only the real part
-        yinBuffer[j] = powerTerms[0] + powerTerms[j] - 2 * audioTransformedReal[j+m_yinBufferSize-1];
+        yinBuffer[j] = powerTerms[0] + powerTerms[j] - 2 *
+            audioOutReal[j+m_yinBufferSize-1];
     }
-    delete [] audioTransformedReal;
-    delete [] audioTransformedImag;
-    delete [] nullImag;
+    delete [] audioTransformedComplex;
+    delete [] audioOutReal;
     delete [] kernel;
-    delete [] kernelTransformedReal;
-    delete [] kernelTransformedImag;
-    delete [] yinStyleACFReal;
-    delete [] yinStyleACFImag;
+    delete [] kernelTransformedComplex;
+    delete [] yinStyleACFComplex;
     delete [] powerTerms;
 }
+
 
 void 
 YinUtil::cumulativeDifference(double *yinBuffer)
@@ -298,7 +293,7 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t minTa
                 minInd = tau;
             }
             currThreshInd = nThresholdInt-1;
-            while (thresholds[currThreshInd] > yinBuffer[tau] && currThreshInd > -1) {
+            while (currThreshInd > -1 && thresholds[currThreshInd] > yinBuffer[tau]) {
                 // std::cerr << distribution[currThreshInd] << std::endl;
                 peakProb[tau] += distribution[currThreshInd];
                 currThreshInd--;
