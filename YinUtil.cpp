@@ -21,7 +21,7 @@
 
 #include <boost/math/distributions.hpp>
 
-YinUtil::YinUtil(size_t yinBufferSize) :
+YinUtil::YinUtil(int yinBufferSize) :
     m_yinBufferSize(yinBufferSize),
     m_fft(yinBufferSize * 2)
 {
@@ -56,8 +56,8 @@ YinUtil::fastDifference(const double *in, double *yinBuffer)
     // initialisation of most of the arrays here was done in a separate function,
     // with all the arrays as members of the class... moved them back here.
     
-    size_t frameSize = 2 * m_yinBufferSize;
-    size_t halfSize = m_yinBufferSize;
+    int frameSize = 2 * m_yinBufferSize;
+    int halfSize = m_yinBufferSize;
 
     double *audioTransformedComplex = new double[frameSize + 2];
     double *audioOutReal = new double[frameSize];
@@ -66,26 +66,15 @@ YinUtil::fastDifference(const double *in, double *yinBuffer)
     double *yinStyleACFComplex = new double[frameSize + 2];
     double *powerTerms = new double[m_yinBufferSize];
     
-    for (size_t j = 0; j < m_yinBufferSize; ++j)
-    {
-        yinBuffer[j] = 0.; // set to zero
-        powerTerms[j] = 0.; // set to zero
-    }
-    
-    for (size_t j = 0; j < frameSize; ++j)
-    {
-        kernel[j] = 0.;
-    }
-    
     // POWER TERM CALCULATION
     // ... for the power terms in equation (7) in the Yin paper
     powerTerms[0] = 0.0;
-    for (size_t j = 0; j < m_yinBufferSize; ++j) {
+    for (int j = 0; j < m_yinBufferSize; ++j) {
         powerTerms[0] += in[j] * in[j];
     }
 
     // now iteratively calculate all others (saves a few multiplications)
-    for (size_t tau = 1; tau < m_yinBufferSize; ++tau) {
+    for (int tau = 1; tau < m_yinBufferSize; ++tau) {
         powerTerms[tau] = powerTerms[tau-1] -
             in[tau-1] * in[tau-1] +
             in[tau+m_yinBufferSize] * in[tau+m_yinBufferSize];  
@@ -96,13 +85,16 @@ YinUtil::fastDifference(const double *in, double *yinBuffer)
     m_fft.forward(in, audioTransformedComplex);
     
     // 2. half of the data, disguised as a convolution kernel
-    for (size_t j = 0; j < m_yinBufferSize; ++j) {
+    for (int j = 0; j < m_yinBufferSize; ++j) {
         kernel[j] = in[m_yinBufferSize-1-j];
+    }
+    for (int j = m_yinBufferSize; j < frameSize; ++j) {
+        kernel[j] = 0.;
     }
     m_fft.forward(kernel, kernelTransformedComplex);
 
     // 3. convolution via complex multiplication -- written into
-    for (size_t j = 0; j <= halfSize; ++j) {
+    for (int j = 0; j <= halfSize; ++j) {
         yinStyleACFComplex[j*2] = // real
             audioTransformedComplex[j*2] * kernelTransformedComplex[j*2] -
             audioTransformedComplex[j*2+1] * kernelTransformedComplex[j*2+1];
@@ -115,7 +107,7 @@ YinUtil::fastDifference(const double *in, double *yinBuffer)
     
     // CALCULATION OF difference function
     // ... according to (7) in the Yin paper.
-    for (size_t j = 0; j < m_yinBufferSize; ++j) {
+    for (int j = 0; j < m_yinBufferSize; ++j) {
         yinBuffer[j] = powerTerms[0] + powerTerms[j] - 2 *
             audioOutReal[j+m_yinBufferSize-1];
     }
@@ -131,7 +123,7 @@ YinUtil::fastDifference(const double *in, double *yinBuffer)
 void 
 YinUtil::cumulativeDifference(double *yinBuffer)
 {    
-    size_t tau;
+    int tau;
     
     yinBuffer[0] = 1;
     
@@ -149,10 +141,10 @@ YinUtil::cumulativeDifference(double *yinBuffer)
 }
 
 int 
-YinUtil::absoluteThreshold(const double *yinBuffer, const double thresh)
+YinUtil::absoluteThreshold(const double *yinBuffer, double thresh)
 {
-    size_t tau;
-    size_t minTau = 0;
+    int tau;
+    int minTau = 0;
     double minVal = 1000.;
     
     // using Joren Six's "loop construct" from TarsosDSP
@@ -192,22 +184,22 @@ static float single15[100] = {0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.
 static float single20[100] = {0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,1.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000,0.00000};
 
 std::vector<double>
-YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t minTau0, const size_t maxTau0) 
+YinUtil::yinProb(const double *yinBuffer, int prior, int minTau0, int maxTau0) 
 {
-    size_t minTau = 2;
-    size_t maxTau = m_yinBufferSize;
+    int minTau = 2;
+    int maxTau = m_yinBufferSize;
 
     // adapt period range, if necessary
     if (minTau0 > 0 && minTau0 < maxTau0) minTau = minTau0;
     if (maxTau0 > 0 && maxTau0 < m_yinBufferSize && maxTau0 > minTau) maxTau = maxTau0;
 
     double minWeight = 0.01;
-    size_t tau;
+    int tau;
     std::vector<float> thresholds;
     std::vector<float> distribution;
     std::vector<double> peakProb = std::vector<double>(m_yinBufferSize);
     
-    size_t nThreshold = 100;
+    int nThreshold = 100;
     int nThresholdInt = nThreshold;
     
     for (int i = 0; i < nThresholdInt; ++i)
@@ -248,7 +240,7 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t minTa
     tau = minTau;
     
     // double factor = 1.0 / (0.25 * (nThresholdInt+1) * (nThresholdInt + 1)); // factor to scale down triangular weight
-    size_t minInd = 0;
+    int minInd = 0;
     float minVal = 42.f;
     // while (currThreshInd != -1 && tau < maxTau)
     // {
@@ -271,7 +263,7 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t minTa
     //     }
     // }
     // double nonPeakProb = 1;
-    // for (size_t i = minTau; i < maxTau; ++i)
+    // for (int i = minTau; i < maxTau; ++i)
     // {
     //     nonPeakProb -= peakProb[i];
     // }
@@ -313,7 +305,7 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t minTa
     
     double nonPeakProb = 1;
     if (sumProb > 0) {
-        for (size_t i = minTau; i < maxTau; ++i)
+        for (int i = minTau; i < maxTau; ++i)
         {
             peakProb[i] = peakProb[i] / sumProb * peakProb[minInd];
             nonPeakProb -= peakProb[i];
@@ -329,7 +321,7 @@ YinUtil::yinProb(const double *yinBuffer, const size_t prior, const size_t minTa
 }
 
 double
-YinUtil::parabolicInterpolation(const double *yinBuffer, const size_t tau) 
+YinUtil::parabolicInterpolation(const double *yinBuffer, int tau) 
 {
     // this is taken almost literally from Joren Six's Java implementation
     if (tau == m_yinBufferSize) // not valid anyway.
@@ -357,10 +349,10 @@ YinUtil::parabolicInterpolation(const double *yinBuffer, const size_t tau)
 }
 
 double 
-YinUtil::sumSquare(const double *in, const size_t start, const size_t end)
+YinUtil::sumSquare(const double *in, int start, int end)
 {
     double out = 0;
-    for (size_t i = start; i < end; ++i)
+    for (int i = start; i < end; ++i)
     {
         out += in[i] * in[i];
     }

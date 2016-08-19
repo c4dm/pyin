@@ -27,21 +27,21 @@ using std::vector;
 class YinUtil
 {
 public:
-    YinUtil(size_t yinBufferSize);
+    YinUtil(int yinBufferSize);
     ~YinUtil();
     
-    double sumSquare(const double *in, const size_t startInd, const size_t endInd);
+    double sumSquare(const double *in, int startInd, int endInd);
     void difference(const double *in, double *yinBuffer);
     void fastDifference(const double *in, double *yinBuffer);
     void slowDifference(const double *in, double *yinBuffer);
     void cumulativeDifference(double *yinBuffer);
-    int absoluteThreshold(const double *yinBuffer, const double thresh);
-    vector<double> yinProb(const double *yinBuffer, const size_t prior,
-                           size_t minTau = 0, size_t maxTau = 0);
-    double parabolicInterpolation(const double *yinBuffer, const size_t tau);
+    int absoluteThreshold(const double *yinBuffer, double thresh);
+    vector<double> yinProb(const double *yinBuffer, int prior,
+                           int minTau = 0, int maxTau = 0);
+    double parabolicInterpolation(const double *yinBuffer, int tau);
 
 private:
-    const size_t m_yinBufferSize;
+    const int m_yinBufferSize;
     Vamp::FFTReal m_fft;
 };
 
