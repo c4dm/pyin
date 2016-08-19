@@ -281,7 +281,7 @@ PYinVamp::getCurrentProgram() const
 }
 
 void
-PYinVamp::selectProgram(string name)
+PYinVamp::selectProgram(string)
 {
 }
 

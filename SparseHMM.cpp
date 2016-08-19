@@ -20,7 +20,7 @@ using std::vector;
 using std::pair;
 
 const vector<double>
-SparseHMM::calculateObsProb(const vector<pair<double, double> > data)
+SparseHMM::calculateObsProb(const vector<pair<double, double> > )
 {
     // dummy (virtual?) implementation to be overloaded
     return(vector<double>());
