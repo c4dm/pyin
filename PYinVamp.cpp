@@ -15,8 +15,6 @@
 #include "MonoNote.h"
 #include "MonoPitch.h"
 
-#include "vamp-sdk/FFT.h"
-
 #include <vector>
 #include <algorithm>
 

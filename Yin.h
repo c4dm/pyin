@@ -26,8 +26,6 @@
 using std::vector;
 using std::pair;
 
-
-
 class Yin
 {
 public:
