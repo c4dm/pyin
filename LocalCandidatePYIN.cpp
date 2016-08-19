@@ -48,12 +48,14 @@ LocalCandidatePYIN::LocalCandidatePYIN(float inputSampleRate) :
     m_preciseTime(0.0f),
     m_pitchProb(0),
     m_timestamp(0),
-    m_nCandidate(13)
+    m_nCandidate(13),
+    m_yinUtil(0)
 {
 }
 
 LocalCandidatePYIN::~LocalCandidatePYIN()
 {
+    delete m_yinUtil;
 }
 
 string
@@ -268,6 +270,8 @@ LocalCandidatePYIN::initialise(size_t channels, size_t stepSize, size_t blockSiz
     m_channels = channels;
     m_stepSize = stepSize;
     m_blockSize = blockSize;
+
+    m_yinUtil = new YinUtil(m_blockSize/2);
     
     reset();
 
@@ -297,20 +301,19 @@ LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp
     
     size_t yinBufferSize = m_blockSize/2;
     double* yinBuffer = new double[yinBufferSize];
-    if (!m_preciseTime) YinUtil::fastDifference(dInputBuffers, yinBuffer, yinBufferSize);
-    else YinUtil::slowDifference(dInputBuffers, yinBuffer, yinBufferSize);    
+    if (!m_preciseTime) m_yinUtil->fastDifference(dInputBuffers, yinBuffer);
+    else m_yinUtil->slowDifference(dInputBuffers, yinBuffer);    
     
     delete [] dInputBuffers;
 
-    YinUtil::cumulativeDifference(yinBuffer, yinBufferSize);
+    m_yinUtil->cumulativeDifference(yinBuffer);
     
     float minFrequency = 60;
     float maxFrequency = 900;
-    vector<double> peakProbability = YinUtil::yinProb(yinBuffer, 
-                                                      m_threshDistr, 
-                                                      yinBufferSize, 
-                                                      m_inputSampleRate/maxFrequency, 
-                                                      m_inputSampleRate/minFrequency);
+    vector<double> peakProbability = m_yinUtil->yinProb(yinBuffer, 
+                                                        m_threshDistr, 
+                                                        m_inputSampleRate/maxFrequency, 
+                                                        m_inputSampleRate/minFrequency);
 
     vector<pair<double, double> > tempPitchProb;
     for (size_t iBuf = 0; iBuf < yinBufferSize; ++iBuf)
@@ -319,7 +322,7 @@ LocalCandidatePYIN::process(const float *const *inputBuffers, RealTime timestamp
         {
             double currentF0 = 
                 m_inputSampleRate * (1.0 /
-                YinUtil::parabolicInterpolation(yinBuffer, iBuf, yinBufferSize));
+                m_yinUtil->parabolicInterpolation(yinBuffer, iBuf));
             double tempPitch = 12 * std::log(currentF0/440)/std::log(2.) + 69;
             tempPitchProb.push_back(pair<double, double>(tempPitch, peakProbability[iBuf]));
         }

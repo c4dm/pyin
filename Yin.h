@@ -26,6 +26,8 @@
 using std::vector;
 using std::pair;
 
+class YinUtil;
+
 class Yin
 {
 public:
@@ -64,6 +66,7 @@ private:
     mutable size_t m_yinBufferSize;
     mutable bool   m_fast;
     // mutable bool m_removeUnvoiced;
+    YinUtil *m_yinUtil;
 };
 
 #endif

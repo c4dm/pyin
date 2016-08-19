@@ -14,29 +14,35 @@
 #ifndef _YINUTIL_H_
 #define _YINUTIL_H_
 
-#include "vamp-sdk/FFT.h"
-#include "MeanFilter.h"
-
 #include <cmath>
 
 #include <iostream>
 #include <vector>
 #include <exception>
 
+#include "vamp-sdk/FFT.h"
+
 using std::vector;
 
 class YinUtil
 {
 public:
-    static double sumSquare(const double *in, const size_t startInd, const size_t endInd);
-    static void difference(const double *in, double *yinBuffer, const size_t yinBufferSize);
-    static void fastDifference(const double *in, double *yinBuffer, const size_t yinBufferSize);
-    static void slowDifference(const double *in, double *yinBuffer, const size_t yinBufferSize);
-    static void cumulativeDifference(double *yinBuffer, const size_t yinBufferSize);
-    static int absoluteThreshold(const double *yinBuffer, const size_t yinBufferSize, const double thresh);
-    static vector<double> yinProb(const double *yinBuffer, const size_t prior, const size_t yinBufferSize, size_t minTau = 0, size_t maxTau = 0);
-    static double parabolicInterpolation(const double *yinBuffer, const size_t tau,
-                                         const size_t yinBufferSize);
+    YinUtil(size_t yinBufferSize);
+    ~YinUtil();
+    
+    double sumSquare(const double *in, const size_t startInd, const size_t endInd);
+    void difference(const double *in, double *yinBuffer);
+    void fastDifference(const double *in, double *yinBuffer);
+    void slowDifference(const double *in, double *yinBuffer);
+    void cumulativeDifference(double *yinBuffer);
+    int absoluteThreshold(const double *yinBuffer, const double thresh);
+    vector<double> yinProb(const double *yinBuffer, const size_t prior,
+                           size_t minTau = 0, size_t maxTau = 0);
+    double parabolicInterpolation(const double *yinBuffer, const size_t tau);
+
+private:
+    const size_t m_yinBufferSize;
+    Vamp::FFTReal m_fft;
 };
 
 #endif
