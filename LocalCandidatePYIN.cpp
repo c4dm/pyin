@@ -87,7 +87,7 @@ LocalCandidatePYIN::getPluginVersion() const
 {
     // Increment this each time you release a version that behaves
     // differently from the previous one
-    return 2;
+    return 3;
 }
 
 string
