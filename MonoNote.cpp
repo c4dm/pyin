@@ -22,7 +22,7 @@ using std::vector;
 using std::pair;
 
 MonoNote::MonoNote() :
-    hmm()
+    hmm(0)
 {
 }
 
@@ -39,11 +39,9 @@ MonoNote::process(const vector<vector<pair<double, double> > > pitchProb)
         obsProb.push_back(hmm.calculateObsProb(pitchProb[iFrame]));
     }
     
-    vector<double> *scale = new vector<double>(pitchProb.size());
-    
     vector<MonoNote::FrameOutput> out; 
     
-    vector<int> path = hmm.decodeViterbi(obsProb, scale);
+    vector<int> path = hmm.decodeViterbi(obsProb);
     
     for (size_t iFrame = 0; iFrame < path.size(); ++iFrame)
     {
@@ -54,8 +52,6 @@ MonoNote::process(const vector<vector<pair<double, double> > > pitchProb)
         stateKind = (path[iFrame]) % hmm.par.nSPP + 1;
 
         out.push_back(FrameOutput(iFrame, currPitch, stateKind));
-        // std::cerr << path[iFrame] << " -- "<< pitchProb[iFrame][0].first << " -- "<< currPitch << " -- " << stateKind << std::endl;
     }
-    delete scale;
     return(out);
 }

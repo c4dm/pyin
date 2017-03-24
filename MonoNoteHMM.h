@@ -27,8 +27,9 @@ using std::vector;
 class MonoNoteHMM : public SparseHMM
 {
 public:
-    MonoNoteHMM();
+    MonoNoteHMM(int fixedLag);
     const std::vector<double> calculateObsProb(const vector<pair<double, double> >);
+
     double getMidiPitch(size_t index);
     double getFrequency(size_t index);
     void build();
