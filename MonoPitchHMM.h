@@ -29,12 +29,11 @@ public:
     MonoPitchHMM(int fixedLag);
     const std::vector<double> calculateObsProb(const vector<pair<double, double> >);
     const float nearestFreq(int state, vector<pair<double, double> > pitchProb);
-
     void build();
     double m_minFreq; // 82.40689f/2
-    size_t m_nBPS;
-    size_t m_nPitch;
-    size_t m_transitionWidth;
+    int m_nBPS;
+    int m_nPitch;
+    int m_transitionWidth;
     double m_selfTrans;
     double m_yinTrust;
     vector<double> m_freqs;

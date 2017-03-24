@@ -15,8 +15,6 @@
 #include "MonoNote.h"
 #include "MonoPitchHMM.h"
 
-#include "vamp-sdk/FFT.h"
-
 #include <vector>
 #include <algorithm>
 
@@ -306,7 +304,7 @@ PYinVamp::getCurrentProgram() const
 }
 
 void
-PYinVamp::selectProgram(string name)
+PYinVamp::selectProgram(string)
 {
 }
 
@@ -514,7 +512,7 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
 
     if (m_fixedLag == 1.f) // do fixed-lag smoothing instead of full Viterbi
     {
-        if (m_timestamp.size() == lag + 1)
+        if (int(m_timestamp.size()) == lag + 1)
         {
             m_timestamp.pop_front();
             m_pitchProb.pop_front();

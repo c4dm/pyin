@@ -192,7 +192,7 @@ YinVamp::getCurrentProgram() const
 }
 
 void
-YinVamp::selectProgram(string name)
+YinVamp::selectProgram(string)
 {
 }
 
