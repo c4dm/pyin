@@ -458,7 +458,7 @@ PYinVamp::reset()
 PYinVamp::FeatureSet
 PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
 {
-    std::cerr << timestamp << std::endl;
+//    std::cerr << timestamp << std::endl;
     int offset = m_preciseTime == 1.0 ? m_blockSize/2 : m_blockSize/4;
     timestamp = timestamp + Vamp::RealTime::frame2RealTime(offset, 
         lrintf(m_inputSampleRate));

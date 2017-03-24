@@ -35,7 +35,7 @@ SparseHMM::SparseHMM(int fixedLag) :
 
 }
 
-const vector<double>
+vector<double>
 SparseHMM::calculateObsProb(const vector<pair<double, double> > )
 {
     // dummy (virtual?) implementation to be overloaded
@@ -46,7 +46,7 @@ void
 SparseHMM::build()
 { }
 
-const std::vector<int> 
+std::vector<int> 
 SparseHMM::decodeViterbi(std::vector<vector<double> > obsProb) 
 {
     int nFrame = obsProb.size();
@@ -166,7 +166,7 @@ SparseHMM::process(vector<double> newObs)
     return 0;
 }
 
-const vector<int>
+vector<int>
 SparseHMM::track()
 {
     // initialise backward step

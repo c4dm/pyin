@@ -26,14 +26,14 @@ class SparseHMM
 {
 public:
     SparseHMM(int fixedLag);
-    virtual const std::vector<double>
+    virtual std::vector<double>
                            calculateObsProb(const vector<pair<double, double> >);
     virtual void           build();
-    const std::vector<int> decodeViterbi(std::vector<vector<double> > obs);
+    std::vector<int>       decodeViterbi(std::vector<vector<double> > obs);
     void                   reset();
     void                   initialise(vector<double> firstObs);
     int                    process(vector<double> newObs);
-    const vector<int>      track();
+    vector<int>            track();
     // "sparse" HMM definition
     int m_fixedLag;
     int m_nState;
