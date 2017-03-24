@@ -49,7 +49,7 @@ SparseHMM::build()
 const std::vector<int> 
 SparseHMM::decodeViterbi(std::vector<vector<double> > obsProb) 
 {
-    size_t nFrame = obsProb.size();
+    int nFrame = obsProb.size();
     if (nFrame < 1) {
         return vector<int>();
     }
@@ -57,7 +57,7 @@ SparseHMM::decodeViterbi(std::vector<vector<double> > obsProb)
     initialise(obsProb[0]);
 
     // rest of forward step
-    for (size_t iFrame = 1; iFrame < nFrame; ++iFrame)
+    for (int iFrame = 1; iFrame < nFrame; ++iFrame)
     {
         process(obsProb[iFrame]);
     }
@@ -71,8 +71,8 @@ SparseHMM::reset()
 {
     m_scale.clear();
     m_psi.clear();
-    for (size_t i = 0; i < m_delta.size(); ++i) m_delta[i] = 0;
-    for (size_t i = 0; i < m_oldDelta.size(); ++i) m_oldDelta[i] = 0;
+    for (int i = 0; i < int(m_delta.size()); ++i) m_delta[i] = 0;
+    for (int i = 0; i < int(m_oldDelta.size()); ++i) m_oldDelta[i] = 0;
 }
 
 void
@@ -83,13 +83,13 @@ SparseHMM::initialise(vector<double> firstObs)
     double deltasum = 0;
 
     // initialise first frame
-    for (size_t iState = 0; iState < m_nState; ++iState)
+    for (int iState = 0; iState < m_nState; ++iState)
     {
         m_oldDelta[iState] = m_init[iState] * firstObs[iState];
         deltasum += m_oldDelta[iState];
     }
 
-    for (size_t iState = 0; iState < m_nState; ++iState)
+    for (int iState = 0; iState < m_nState; ++iState)
     {
         m_oldDelta[iState] /= deltasum; // normalise (scale)
     }
@@ -104,13 +104,13 @@ SparseHMM::process(vector<double> newObs)
     vector<int> tempPsi = vector<int>(m_nState,0);
 
     // calculate best previous state for every current state
-    size_t fromState;
-    size_t toState;
+    int fromState;
+    int toState;
     double currentTransProb;
     double currentValue;
     
     // this is the "sparse" loop
-    for (size_t iTrans = 0; iTrans < m_nTrans; ++iTrans)
+    for (int iTrans = 0; iTrans < m_nTrans; ++iTrans)
     {
         fromState = m_from[iTrans];
         toState = m_to[iTrans];
@@ -128,7 +128,7 @@ SparseHMM::process(vector<double> newObs)
 
 
     double deltasum = 0;
-    for (size_t jState = 0; jState < m_nState; ++jState)
+    for (int jState = 0; jState < m_nState; ++jState)
     {
         m_delta[jState] *= newObs[jState];
         deltasum += m_delta[jState];
@@ -136,7 +136,7 @@ SparseHMM::process(vector<double> newObs)
 
     if (deltasum > 0)
     {
-        for (size_t iState = 0; iState < m_nState; ++iState)
+        for (int iState = 0; iState < m_nState; ++iState)
         {
             m_oldDelta[iState] = m_delta[iState] / deltasum;// normalise (scale)
             m_delta[iState] = 0;
@@ -147,7 +147,7 @@ SparseHMM::process(vector<double> newObs)
         std::cerr << "WARNING: Viterbi has been fed some zero "
             "probabilities, at least they become zero "
             "in combination with the model." << std::endl;
-        for (size_t iState = 0; iState < m_nState; ++iState)
+        for (int iState = 0; iState < m_nState; ++iState)
         {
             m_oldDelta[iState] = 1.0/m_nState;
             m_delta[iState] = 0;
@@ -155,7 +155,7 @@ SparseHMM::process(vector<double> newObs)
         m_scale.push_back(1.0);
     }
 
-    if (m_fixedLag > 0 && m_psi.size() > m_fixedLag)
+    if (m_fixedLag > 0 && int(m_psi.size()) > m_fixedLag)
     {
         m_psi.pop_front();
         m_scale.pop_front();
@@ -170,14 +170,14 @@ const vector<int>
 SparseHMM::track()
 {
     // initialise backward step
-    size_t nFrame = m_psi.size();
+    int nFrame = m_psi.size();
 
     // The final output path (current assignment arbitrary, makes sense only for 
     // Chordino, where nChord-1 is the "no chord" label)
     vector<int> path = vector<int>(nFrame, m_nState-1);
 
     double bestValue = 0;
-    for (size_t iState = 0; iState < m_nState; ++iState)
+    for (int iState = 0; iState < m_nState; ++iState)
     {
         double currentValue = m_oldDelta[iState];
         if (currentValue > bestValue)
