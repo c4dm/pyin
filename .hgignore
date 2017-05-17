@@ -3,4 +3,8 @@ syntax: glob
 *.so
 *~
 *.dll
-
+test/test-*
+test/regression/log-*
+test/regression/obtained-*
+*.orig
+*.bak

@@ -86,9 +86,7 @@ protected:
     vector<float> m_level;
     vector<float> m_pitchTrack;
 
-    // for note writing
-    // vector<float> m_notePitchTrack; // contains pitches of one current note
-    // bool m_oldIsVoiced;
+    void addNoteFeatures(FeatureSet &fs);
 };
 
 #endif

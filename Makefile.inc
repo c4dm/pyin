@@ -34,7 +34,7 @@ PLUGIN_OBJECTS := $(OBJECTS) $(PLUGIN_MAIN:.cpp=.o)
 
 all: $(PLUGIN) $(TESTS)
 	@for t in $(TESTS); do echo; echo "Running $$t"; ./"$$t" || exit 1; done
-	@echo; bash ./test/regression.sh
+	@echo; bash ./test/regression/regression.sh
 
 plugin: $(PLUGIN)
 
