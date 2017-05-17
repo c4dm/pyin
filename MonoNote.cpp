@@ -33,16 +33,37 @@ MonoNote::~MonoNote()
 const vector<MonoNote::FrameOutput>
 MonoNote::process(const vector<vector<pair<double, double> > > pitchProb)
 {
-    vector<vector<double> > obsProb;
-    for (size_t iFrame = 0; iFrame < pitchProb.size(); ++iFrame)
-    {
-        obsProb.push_back(hmm.calculateObsProb(pitchProb[iFrame]));
+    // Previously, this built up a single matrix of probabilities, by
+    // calling calculateObsProb to get a column for each frame in
+    // pitchProb.
+    //
+    // The number of distinct states depends on MonoNoteParameters,
+    // but the defaults have 3 states per pitch, 3 pitches per MIDI
+    // note, and 69 MIDI notes, giving 681 states per frame. With a
+    // frame step size of 256 at 44100Hz sample rate, a 3-minute song
+    // has about 30K frames leading to a 20 million element
+    // probability matrix.
+    //
+    // Since the matrix is very sparse, we can avoid some of this by
+    // feeding the (sparse implementation of) HMM one column at a
+    // time.
+
+    vector<int> path;
+    
+    if (!pitchProb.empty()) {
+
+        hmm.initialise(hmm.calculateObsProb(pitchProb[0]));
+        
+        for (size_t iFrame = 1; iFrame < pitchProb.size(); ++iFrame)
+        {
+            hmm.process(hmm.calculateObsProb(pitchProb[iFrame]));
+        }
+
+        path = hmm.track();
     }
     
     vector<MonoNote::FrameOutput> out; 
-    
-    vector<int> path = hmm.decodeViterbi(obsProb);
-    
+
     for (size_t iFrame = 0; iFrame < path.size(); ++iFrame)
     {
         double currPitch = -1;
@@ -53,5 +74,6 @@ MonoNote::process(const vector<vector<pair<double, double> > > pitchProb)
 
         out.push_back(FrameOutput(iFrame, currPitch, stateKind));
     }
+    
     return(out);
 }

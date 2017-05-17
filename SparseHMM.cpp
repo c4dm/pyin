@@ -35,13 +35,6 @@ SparseHMM::SparseHMM(int fixedLag) :
 
 }
 
-vector<double>
-SparseHMM::calculateObsProb(const vector<pair<double, double> > )
-{
-    // dummy (virtual?) implementation to be overloaded
-    return(vector<double>());
-}
-
 void
 SparseHMM::build()
 { }
@@ -125,7 +118,6 @@ SparseHMM::process(vector<double> newObs)
         }
     }
     m_psi.push_back(tempPsi);
-
 
     double deltasum = 0;
     for (int jState = 0; jState < m_nState; ++jState)
