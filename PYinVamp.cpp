@@ -431,7 +431,7 @@ PYinVamp::reset()
     m_yin.setFrameSize(m_blockSize);
     m_yin.setFast(!m_preciseTime);
 
-    if (m_fixedLag == 1.f) m_pitchHmm = MonoPitchHMM(100);
+    if (m_fixedLag > 0.5f) m_pitchHmm = MonoPitchHMM(100);
     else                   m_pitchHmm = MonoPitchHMM(0);
     
     m_pitchProb.clear();
@@ -494,7 +494,7 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
 
     int lag = m_pitchHmm.m_fixedLag;
 
-    if (m_fixedLag == 1.f) // do fixed-lag smoothing instead of full Viterbi
+    if (m_fixedLag > 0.5f) // do fixed-lag smoothing instead of full Viterbi
     {
         if (int(m_timestamp.size()) == lag + 1)
         {
@@ -623,7 +623,16 @@ PYinVamp::addNoteFeatures(FeatureSet &fs)
         smoothedPitch.push_back(temp);
     }
 
-    MonoNote mn;
+    // In fixed-lag mode, we use fixed-lag processing for the note
+    // transitions here as well as for the pitch transitions in
+    // process. The main reason we provide the fixed-lag option is so
+    // that we can get pitch results incrementally from process; we
+    // don't get that outcome here, but we do benefit from its bounded
+    // memory usage, which can be quite a big deal. So if the caller
+    // asked for it there, we use it here too. (It is a bit slower,
+    // but not much.)
+    
+    MonoNote mn(m_fixedLag > 0.5f);
     vector<MonoNote::FrameOutput> mnOut = mn.process(smoothedPitch);
 
     std::cerr << "mnOut size: " << mnOut.size() << std::endl;

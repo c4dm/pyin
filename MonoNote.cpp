@@ -21,8 +21,9 @@
 using std::vector;
 using std::pair;
 
-MonoNote::MonoNote() :
-    hmm(0)
+MonoNote::MonoNote(bool fixedLag) :
+    m_fixedLag(fixedLag),
+    hmm(m_fixedLag ? 1000 : 0)
 {
 }
 
@@ -49,6 +50,7 @@ MonoNote::process(const vector<vector<pair<double, double> > > pitchProb)
     // time.
 
     vector<int> path;
+    path.reserve(pitchProb.size());
     
     if (!pitchProb.empty()) {
 
@@ -56,13 +58,21 @@ MonoNote::process(const vector<vector<pair<double, double> > > pitchProb)
         
         for (size_t iFrame = 1; iFrame < pitchProb.size(); ++iFrame)
         {
+            if (m_fixedLag && (int(iFrame) >= hmm.m_fixedLag)) 
+            {
+                vector<int> rawPath = hmm.track();
+                path.push_back(rawPath[0]);
+            }
+
             hmm.process(hmm.calculateObsProb(pitchProb[iFrame]));
         }
 
-        path = hmm.track();
+        vector<int> rawPath = hmm.track();
+        path.insert(path.end(), rawPath.begin(), rawPath.end());
     }
     
-    vector<MonoNote::FrameOutput> out; 
+    vector<MonoNote::FrameOutput> out;
+    out.reserve(path.size());
 
     for (size_t iFrame = 0; iFrame < path.size(); ++iFrame)
     {
