@@ -162,7 +162,7 @@ PYinVamp::getParameterDescriptors() const
     d.unit = "";
     d.minValue = 0.0f;
     d.maxValue = 1.0f;
-    d.defaultValue = 0.0f;
+    d.defaultValue = 1.0f;
     d.isQuantized = true;
     d.quantizeStep = 1.0f;
     list.push_back(d);
