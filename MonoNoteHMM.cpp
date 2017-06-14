@@ -92,7 +92,7 @@ MonoNoteHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
             out[i] = (1-pIsPitched) / (par.nPPS * par.nS);
         }
     }
-
+    
     return(out);
 }
 

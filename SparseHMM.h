@@ -25,15 +25,18 @@ using std::pair;
 class SparseHMM
 {
 public:
-    SparseHMM(int fixedLag);
-    virtual std::vector<double>
-                           calculateObsProb(const vector<pair<double, double> >);
+    SparseHMM(int fixedLag); // set fixedLag == 0 when doing full Viterbi
+    
+    virtual std::vector<double> calculateObsProb
+    (const vector<pair<double, double> >) = 0;
+    
     virtual void           build();
     std::vector<int>       decodeViterbi(std::vector<vector<double> > obs);
     void                   reset();
     void                   initialise(vector<double> firstObs);
     int                    process(vector<double> newObs);
     vector<int>            track();
+    
     // "sparse" HMM definition
     int m_fixedLag;
     int m_nState;

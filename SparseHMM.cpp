@@ -35,13 +35,6 @@ SparseHMM::SparseHMM(int fixedLag) :
 
 }
 
-vector<double>
-SparseHMM::calculateObsProb(const vector<pair<double, double> > )
-{
-    // dummy (virtual?) implementation to be overloaded
-    return(vector<double>());
-}
-
 void
 SparseHMM::build()
 { }
@@ -126,7 +119,6 @@ SparseHMM::process(vector<double> newObs)
     }
     m_psi.push_back(tempPsi);
 
-
     double deltasum = 0;
     for (int jState = 0; jState < m_nState; ++jState)
     {
@@ -144,9 +136,9 @@ SparseHMM::process(vector<double> newObs)
         m_scale.push_back(1.0/deltasum);
     } else
     {
-        std::cerr << "WARNING: Viterbi has been fed some zero "
-            "probabilities, at least they become zero "
-            "in combination with the model." << std::endl;
+//        std::cerr << "WARNING: Viterbi has been fed some zero "
+//            "probabilities, at least they become zero "
+//            "in combination with the model." << std::endl;
         for (int iState = 0; iState < m_nState; ++iState)
         {
             m_oldDelta[iState] = 1.0/m_nState;
