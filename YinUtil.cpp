@@ -19,8 +19,6 @@
 #include <cmath>
 #include <algorithm>
 
-#include <boost/math/distributions.hpp>
-
 YinUtil::YinUtil(int yinBufferSize) :
     m_yinBufferSize(yinBufferSize),
     m_fft(yinBufferSize * 2)
