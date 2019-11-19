@@ -29,7 +29,7 @@ MonoNoteHMM::MonoNoteHMM(int fixedLag) :
 }
 
 vector<double>
-MonoNoteHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
+MonoNoteHMM::calculateObsProb(const vector<pair<double, double> > &pitchProb)
 {
     // pitchProb is a list of pairs (pitches and their probabilities)
     

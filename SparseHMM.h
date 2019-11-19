@@ -28,7 +28,7 @@ public:
     SparseHMM(int fixedLag); // set fixedLag == 0 when doing full Viterbi
     
     virtual std::vector<double> calculateObsProb
-    (const vector<pair<double, double> >) = 0;
+    (const vector<pair<double, double> > &) = 0;
     
     virtual void           build();
     std::vector<int>       decodeViterbi(std::vector<vector<double> > obs);

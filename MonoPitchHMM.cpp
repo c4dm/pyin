@@ -45,12 +45,14 @@ MonoPitchHMM::MonoPitchHMM(int fixedLag) :
 }
 
 vector<double>
-MonoPitchHMM::calculateObsProb(const vector<pair<double, double> > pitchProb)
+MonoPitchHMM::calculateObsProb(const vector<pair<double, double> > &pitchProb)
 {
     vector<double> out = vector<double>(2*m_nPitch+1);
     double probYinPitched = 0;
+    int nPair = int(pitchProb.size());
+    
     // BIN THE PITCHES
-    for (int iPair = 0; iPair < int(pitchProb.size()); ++iPair)
+    for (int iPair = 0; iPair < nPair; ++iPair)
     {
         double freq = 440. * std::pow(2, (pitchProb[iPair].first - 69)/12);
         if (freq <= m_minFreq) continue;
@@ -162,7 +164,7 @@ Takes a state number and a pitch-prob vector, then finds the pitch that would
 have been closest to the pitch of the state. Easy to understand? ;)
 */
 float
-MonoPitchHMM::nearestFreq(int state, vector<pair<double, double> > pitchProb)
+MonoPitchHMM::nearestFreq(int state, const vector<pair<double, double> > &pitchProb)
 {
     float hmmFreq = m_freqs[state];
     // std::cerr << "hmmFreq " << hmmFreq << std::endl;
