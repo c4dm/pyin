@@ -8,3 +8,8 @@ test/regression/log-*
 test/regression/obtained-*
 *.orig
 *.bak
+win32-build/release
+win32-build/x64
+*.msi
+
+
