@@ -5,6 +5,11 @@ set -u
 testdir=$(dirname "$0")
 rootdir="$testdir/../.."
 
+if [ ! -d "$rootdir/testdata" ]; then
+    echo "No testdata directory here, skipping regression test"
+    exit 0
+fi
+
 if ! sonic-annotator -v >/dev/null ; then
     echo "No sonic-annotator available in PATH, skipping regression test"
     exit 0
