@@ -450,12 +450,16 @@ PYinVamp::process(const float *const *inputBuffers, RealTime timestamp)
     FeatureSet fs;
     
     float rms = 0;
-    
+
     double *dInputBuffers = new double[m_blockSize];
-    for (size_t i = 0; i < m_blockSize; ++i) {
-        dInputBuffers[i] = inputBuffers[0][i];
-        rms += inputBuffers[0][i] * inputBuffers[0][i];
-    }
+    std::copy(inputBuffers[0], inputBuffers[0] + m_blockSize, dInputBuffers);
+
+    rms = std::accumulate( 
+        inputBuffers[0], 
+        inputBuffers[0] + m_blockSize, 
+        0.0f, 
+        [](float acc, float val){return acc + val*val; });
+
     rms /= m_blockSize;
     rms = sqrt(rms);
     
